@@ -1,11 +1,26 @@
 import os
 import requests
+import argparse
 from pathlib import Path
 from os.path import split, splitext
 from pathvalidate import sanitize_filename
 from requests import HTTPError
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin, urlsplit, unquote
+
+
+def get_command_line_argument():
+    """parse args"""
+    parser = argparse.ArgumentParser(
+        description="""Программа скачивает книги. по дефолту будут скачены книги с id 1 по 10 """)
+    parser.add_argument('start_id', nargs='?', help='Введите с какого id скачивать книги: ',
+                        default=1, type=int)
+    parser.add_argument('end_id', nargs='?', help='Введите до какого id скачивать книги: ',
+                        default=10, type=int)
+    start_id = parser.parse_args().start_id
+    end_id = parser.parse_args().end_id
+
+    return start_id, end_id
 
 
 def get_filename_and_ext(img_url):
@@ -102,10 +117,9 @@ def get_img_url_name(book_id):
     return img_url, img_name
 
 
-def fetch_books(num):
-    fetch_book = 0
-    book_id = 1
-    while fetch_book < num:
+def fetch_books(start_id, end_id):
+    book_id = start_id
+    while book_id <= end_id:
         try:
             url = 'https://tululu.org/txt.php'
             params = {'id': book_id}
@@ -122,13 +136,13 @@ def fetch_books(num):
             download_image(img_url, img_name)
 
             book_id += 1
-            fetch_book += 1
         except (HTTPError, AttributeError):
             book_id += 1
 
 
 def main():
-    fetch_books(10)
+    start_id, end_id = get_command_line_argument()
+    fetch_books(start_id, end_id)
 
 
 if __name__ == '__main__':
