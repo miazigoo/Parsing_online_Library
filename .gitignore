@@ -141,3 +141,5 @@ cython_debug/
 /static/.gitkeep
 .idea/
 /books/
+/images/
+test.py
