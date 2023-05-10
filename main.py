@@ -73,6 +73,10 @@ def get_book_name(book_id):
     title_tag = soup.find('td', class_='ow_px_td').find('div', id='content').find('h1')
     book_title = title_tag.text.split('::')[0].strip()
     book_name = f'{book_id}.{book_title}.txt'
+
+    genres_tag = soup.find('span', class_='d_book').find_all('a')
+    genres_text = [x.text for x in genres_tag]
+    print(f'{book_title}\n{genres_text}\n')
     return book_name
 
 
