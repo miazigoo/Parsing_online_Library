@@ -8,6 +8,11 @@ from os.path import split
 from requests import HTTPError
 
 
+def check_for_redirect(response):
+    if response.status_code > 204:
+        raise HTTPError
+
+
 def get_filename_and_ext(img_url):
     """Getting the link address and extension"""
     url_address = urlsplit(img_url).path
@@ -36,6 +41,7 @@ def fetch_10_books():
             url = 'https://tululu.org/txt.php'
             params = {'id': book_id}
             response = requests.get(url, params=params)
+            check_for_redirect(response)
             response.raise_for_status()
             book_url = response.url
             book_name = f'{fetch_book}.txt'
