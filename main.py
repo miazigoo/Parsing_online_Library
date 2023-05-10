@@ -76,6 +76,19 @@ def get_book_name(book_id):
     return book_name
 
 
+def fetch_book_comments(book_id, book_name):
+    soup = get_soup(book_id)
+    book_comments = soup.find_all('div', class_='texts')
+    book_path = Path('comments')
+    book_path.mkdir(parents=True, exist_ok=True)
+    normal_book_name = sanitize_filename(book_name)
+    file_path = os.path.join(book_path, normal_book_name)
+    with open(f"{file_path}", "w", encoding='utf-8') as file:
+        for comment in book_comments:
+            file.write(comment.span.string + '\n')
+    return 'success'
+
+
 def get_img_url_name(book_id):
     url = 'https://tululu.org/'
     soup = get_soup(book_id)
@@ -98,6 +111,7 @@ def fetch_books(num):
 
             book_url = response.url
             book_name = get_book_name(book_id)
+            fetch_book_comments(book_id, book_name)
             download_txt(book_url, book_name)
 
             img_url, img_name = get_img_url_name(book_id)
