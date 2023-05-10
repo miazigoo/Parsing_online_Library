@@ -1,11 +1,9 @@
+import os
 import requests
 from pathlib import Path
-from urllib.parse import unquote
-from urllib.parse import urlsplit
-from os.path import splitext
-from os.path import split
-
+from pathvalidate import sanitize_filename
 from requests import HTTPError
+from bs4 import BeautifulSoup
 
 
 def check_for_redirect(response):
@@ -13,30 +11,40 @@ def check_for_redirect(response):
         raise HTTPError
 
 
-def get_filename_and_ext(img_url):
-    """Getting the link address and extension"""
-    url_address = urlsplit(img_url).path
-    encoding_url = unquote(url_address)
-    filename = split(encoding_url)[-1]
-    extension = splitext(filename)[-1]
-    return filename, extension
-
-
-def download_book(book_url, book_name, books_path):
-    """Download the book"""
-    book_path = Path(books_path)
+def download_txt(url, filename, folder='books/'):
+    """Функция для скачивания текстовых файлов.
+    Args:
+        url (str): Cсылка на текст, который хочется скачать.
+        filename (str): Имя файла, с которым сохранять.
+        folder (str): Папка, куда сохранять.
+    Returns:
+        str: Путь до файла, куда сохранён текст.
+    """
+    book_path = Path(folder)
     book_path.mkdir(parents=True, exist_ok=True)
-    response = requests.get(book_url)
+    response = requests.get(url)
     response.raise_for_status()
-    with open(f'{book_path}/{book_name}', 'wb') as file:
+    normal_filename = sanitize_filename(filename)
+    file_path = os.path.join(folder, normal_filename)
+    with open(f'{file_path}', 'wb') as file:
         file.write(response.content)
 
 
-def fetch_10_books():
-    books_path = 'books'
+def get_book_name(book_id):
+    url = f'https://tululu.org/b{book_id}/'
+    response = requests.get(url)
+    response.raise_for_status()
+    soup = BeautifulSoup(response.text, 'lxml')
+    title_tag = soup.find('td', class_='ow_px_td').find('div', id='content').find('h1')
+    book_title = title_tag.text.split('::')[0].strip()
+    book_name = f'{book_id}.{book_title}.txt'
+    return book_name
+
+
+def fetch_books(num):
     fetch_book = 0
     book_id = 1
-    while fetch_book < 10:
+    while fetch_book < num:
         try:
             url = 'https://tululu.org/txt.php'
             params = {'id': book_id}
@@ -44,16 +52,16 @@ def fetch_10_books():
             check_for_redirect(response)
             response.raise_for_status()
             book_url = response.url
-            book_name = f'{fetch_book}.txt'
-            download_book(book_url, book_name, books_path)
+            book_name = get_book_name(book_id)
+            download_txt(book_url, book_name)
             book_id += 1
             fetch_book += 1
-        except HTTPError:
+        except (HTTPError, AttributeError):
             book_id += 1
 
 
 def main():
-    fetch_10_books()
+    fetch_books(10)
 
 
 if __name__ == '__main__':
