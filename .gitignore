@@ -144,3 +144,4 @@ cython_debug/
 /images/
 /comments/
 test.py
+bs4_tutorial.py
