@@ -1,6 +1,9 @@
 import os
+import sys
 import requests
 import argparse
+import logging
+
 from pathlib import Path
 from os.path import split, splitext
 from pathvalidate import sanitize_filename
@@ -33,7 +36,7 @@ def get_filename_and_ext(img_url):
 
 def check_for_redirect(response):
     if response.status_code > 204:
-        raise HTTPError
+        raise BookRedirectFormatError('Произошел redirect. Перехожу к следующему ID')
 
 
 def download_txt(url, filename, folder='books/'):
@@ -113,6 +116,10 @@ def get_img_url_name(book_id, soup):
     return img_url, img_name
 
 
+class BookRedirectFormatError(HTTPError):
+    pass
+
+
 def fetch_books(start_id, end_id):
     book_id = start_id
     while book_id <= end_id:
@@ -133,7 +140,9 @@ def fetch_books(start_id, end_id):
             download_image(img_url, img_name)
 
             book_id += 1
-        except HTTPError:
+        except BookRedirectFormatError as error:
+            print(error, file=sys.stderr)
+            logging.debug(error)
             book_id += 1
 
 
