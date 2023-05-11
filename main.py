@@ -1,5 +1,7 @@
 import os
 import sys
+import time
+
 import requests
 import argparse
 import logging
@@ -10,6 +12,28 @@ from pathvalidate import sanitize_filename
 from requests import HTTPError
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin, urlsplit, unquote
+
+
+def retry(cooloff=5, exc_type=None):
+    if not exc_type:
+        exc_type = [requests.exceptions.ConnectionError]
+
+    def real_decorator(function):
+        def wrapper(*args, **kwargs):
+            while True:
+                try:
+                    return function(*args, **kwargs)
+                except Exception as e:
+                    if e.__class__ in exc_type:
+                        print("Сбой подключения. Произвожу попытку нового подключения.", e, file=sys.stderr)
+                        logging.debug(e)
+                        time.sleep(cooloff)
+                    else:
+                        raise e
+
+        return wrapper
+
+    return real_decorator
 
 
 def get_command_line_arguments():
@@ -50,7 +74,8 @@ def download_txt(url, filename, folder='books/'):
     """
     book_path = Path(folder)
     book_path.mkdir(parents=True, exist_ok=True)
-    response = requests.get(url)
+    session = requests.Session()
+    response = session.get(url)
     response.raise_for_status()
     normal_filename = sanitize_filename(filename)
     file_path = os.path.join(folder, normal_filename)
@@ -69,7 +94,8 @@ def download_image(url, filename, folder='images/'):
     """
     book_path = Path(folder)
     book_path.mkdir(parents=True, exist_ok=True)
-    response = requests.get(url)
+    session = requests.Session()
+    response = session.get(url)
     response.raise_for_status()
     normal_filename = sanitize_filename(filename)
     file_path = os.path.join(folder, normal_filename)
@@ -79,7 +105,8 @@ def download_image(url, filename, folder='images/'):
 
 def parse_book_page(book_id):
     url = f'https://tululu.org/b{book_id}/'
-    response = requests.get(url)
+    session = requests.Session()
+    response = session.get(url)
     response.raise_for_status()
     soup = BeautifulSoup(response.text, 'lxml')
     return soup
@@ -126,7 +153,8 @@ def fetch_books(start_id, end_id):
         try:
             url = 'https://tululu.org/txt.php'
             params = {'id': book_id}
-            response = requests.get(url, params=params, allow_redirects=False)
+            session = requests.Session()
+            response = session.get(url, params=params, allow_redirects=False)
             check_for_redirect(response)
             response.raise_for_status()
             soup = parse_book_page(book_id)
@@ -146,6 +174,7 @@ def fetch_books(start_id, end_id):
             book_id += 1
 
 
+@retry()
 def main():
     args = get_command_line_arguments()
     start_id, end_id = args.start_id, args.end_id
@@ -154,4 +183,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
