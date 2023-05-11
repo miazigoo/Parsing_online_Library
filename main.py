@@ -17,10 +17,9 @@ def get_command_line_arguments():
                         default=1, type=int)
     parser.add_argument('end_id', nargs='?', help='Введите до какого id скачивать книги: ',
                         default=10, type=int)
-    start_id = parser.parse_args().start_id
-    end_id = parser.parse_args().end_id
+    args = parser.parse_args()
 
-    return start_id, end_id
+    return args
 
 
 def get_filename_and_ext(img_url):
@@ -139,7 +138,8 @@ def fetch_books(start_id, end_id):
 
 
 def main():
-    start_id, end_id = get_command_line_argument()
+    args = get_command_line_arguments()
+    start_id, end_id = args.start_id, args.end_id
     fetch_books(start_id, end_id)
 
 
