@@ -141,7 +141,7 @@ def get_book_name(book_id, soup):
     return book_name
 
 
-def fetch_book_comments(book_id, book_name, soup):
+def fetch_book_comments(book_name, soup):
     book_comments = soup['book_comments']
     book_path = Path('comments')
     book_path.mkdir(parents=True, exist_ok=True)
@@ -166,7 +166,7 @@ def fetch_books(start_id, end_id):
     book_id = start_id
     while book_id <= end_id:
         try:
-            soup = get_soup_book_page(book_id)
+            soup = parse_book_page(book_id)
 
             book_name = get_book_name(book_id, soup)
             fetch_book_comments(book_id, book_name, soup)
