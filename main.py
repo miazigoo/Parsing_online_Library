@@ -103,7 +103,7 @@ def download_image(url, filename, folder='images/'):
         file.write(response.content)
 
 
-def parse_book_page(book_id):
+def get_soup_book_page(book_id):
     url = f'https://tululu.org/b{book_id}/'
     session = requests.Session()
     response = session.get(url)
@@ -157,7 +157,7 @@ def fetch_books(start_id, end_id):
             response = session.get(url, params=params)
             check_for_redirect(response)
             response.raise_for_status()
-            soup = parse_book_page(book_id)
+            soup = get_soup_book_page(book_id)
 
             book_url = response.url
             book_name = get_book_name(book_id, soup)
