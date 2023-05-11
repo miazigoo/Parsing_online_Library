@@ -135,7 +135,7 @@ def fetch_book_comments(book_id, book_name, soup):
 
 
 def get_img_url_name(book_id, soup):
-    url = 'https://tululu.org/'
+    url = f'https://tululu.org/b{book_id}/'
     img_src = soup.find('div', class_='bookimage').find('img')['src']
     img_url = urljoin(url, img_src)
     img_name, _ = get_filename_and_ext(img_url)
