@@ -59,7 +59,7 @@ def get_filename_and_ext(img_url):
 
 
 def check_for_redirect(response):
-    if response.status_code > 204:
+    if response.history:
         raise BookRedirectFormatError('Произошел redirect. Перехожу к следующему ID')
 
 
@@ -154,7 +154,7 @@ def fetch_books(start_id, end_id):
             url = 'https://tululu.org/txt.php'
             params = {'id': book_id}
             session = requests.Session()
-            response = session.get(url, params=params, allow_redirects=False)
+            response = session.get(url, params=params)
             check_for_redirect(response)
             response.raise_for_status()
             soup = parse_book_page(book_id)
