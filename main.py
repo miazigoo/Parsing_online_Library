@@ -107,49 +107,56 @@ def download_image(url, filename, folder='images/'):
         file.write(response.content)
 
 
-def get_soup_book_page(book_id):
-    url = f'https://tululu.org/b{book_id}/'
-    session = requests.Session()
-    response = session.get(url)
-    response.raise_for_status()
-    soup = BeautifulSoup(response.text, 'lxml')
-    return soup
-
-
 class BookRedirectFormatError(HTTPError):
     pass
 
 
-def get_book_name(book_id, soup):
+def parse_book_page(book_id):
     try:
-        title_tag = soup.find('td', class_='ow_px_td').find('div', id='content').find('h1')
-        book_title = title_tag.text.split('::')[0].strip()
-        book_name = f'{book_id}.{book_title}.txt'
-
-        genres_tag = soup.find('span', class_='d_book').find_all('a')
-        genres_text = [x.text for x in genres_tag]
-        return book_name
+        url = f'https://tululu.org/b{book_id}/'
+        session = requests.Session()
+        response = session.get(url)
+        response.raise_for_status()
+        soup = BeautifulSoup(response.text, 'lxml')
+        my_soup = {
+            'title_tag': soup.find('td', class_='ow_px_td').find('div', id='content').find('h1'),
+            'book_comments': soup.find_all('div', class_='texts'),
+            'img_src': soup.find('div', class_='bookimage').find('img')['src'],
+            'genres_tag': soup.find('span', class_='d_book').find_all('a')
+        }
+        return my_soup
     except AttributeError as err:
         print(err, file=sys.stderr)
         logging.debug(err)
         raise BookRedirectFormatError('Перехожу к следующей книге')
 
 
+def get_book_name(book_id, soup):
+    title_tag = soup['title_tag']
+    book_title = title_tag.text.split('::')[0].strip()
+    book_name = f'{book_id}.{book_title}.txt'
+
+    genres_tag = soup['genres_tag']
+    genres_text = [x.text for x in genres_tag]
+    return book_name
+
+
 def fetch_book_comments(book_id, book_name, soup):
-    book_comments = soup.find_all('div', class_='texts')
+    book_comments = soup['book_comments']
     book_path = Path('comments')
     book_path.mkdir(parents=True, exist_ok=True)
     normal_book_name = sanitize_filename(book_name)
     file_path = os.path.join(book_path, normal_book_name)
     with open(f"{file_path}", "w", encoding='utf-8') as file:
         for comment in book_comments:
-            file.write(comment.span.string + '\n')
+            if comment.span.string:
+                file.write(comment.span.string + '\n')
     return 'success'
 
 
 def get_img_url_name(book_id, soup):
     url = f'https://tululu.org/b{book_id}/'
-    img_src = soup.find('div', class_='bookimage').find('img')['src']
+    img_src = soup['img_src']
     img_url = urljoin(url, img_src)
     img_name, _ = get_filename_and_ext(img_url)
     return img_url, img_name
@@ -159,15 +166,8 @@ def fetch_books(start_id, end_id):
     book_id = start_id
     while book_id <= end_id:
         try:
-            # url = 'https://tululu.org/txt.php'
-            # params = {'id': book_id}
-            # session = requests.Session()
-            # response = session.get(url, params=params)
-            # check_for_redirect(response)
-            # response.raise_for_status()
             soup = get_soup_book_page(book_id)
 
-            # book_url = response.url
             book_name = get_book_name(book_id, soup)
             fetch_book_comments(book_id, book_name, soup)
             download_txt(book_id, book_name)
