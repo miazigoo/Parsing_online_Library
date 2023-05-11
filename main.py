@@ -133,7 +133,7 @@ def fetch_books(start_id, end_id):
             download_image(img_url, img_name)
 
             book_id += 1
-        except (HTTPError, AttributeError):
+        except HTTPError:
             book_id += 1
 
 
