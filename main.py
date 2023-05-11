@@ -83,8 +83,7 @@ def parse_book_page(book_id):
     return soup
 
 
-def get_book_name(book_id):
-    soup = parse_book_page(book_id)
+def get_book_name(book_id, soup):
     title_tag = soup.find('td', class_='ow_px_td').find('div', id='content').find('h1')
     book_title = title_tag.text.split('::')[0].strip()
     book_name = f'{book_id}.{book_title}.txt'
@@ -95,8 +94,7 @@ def get_book_name(book_id):
     return book_name
 
 
-def fetch_book_comments(book_id, book_name):
-    soup = parse_book_page(book_id)
+def fetch_book_comments(book_id, book_name, soup):
     book_comments = soup.find_all('div', class_='texts')
     book_path = Path('comments')
     book_path.mkdir(parents=True, exist_ok=True)
@@ -108,9 +106,8 @@ def fetch_book_comments(book_id, book_name):
     return 'success'
 
 
-def get_img_url_name(book_id):
+def get_img_url_name(book_id, soup):
     url = 'https://tululu.org/'
-    soup = parse_book_page(book_id)
     img = soup.find('div', class_='bookimage').find('img')['src']
     img_url = urljoin(url, img)
     img_name, _ = get_filename_and_ext(img_url)
@@ -126,13 +123,14 @@ def fetch_books(start_id, end_id):
             response = requests.get(url, params=params, allow_redirects=False)
             check_for_redirect(response)
             response.raise_for_status()
+            soup = parse_book_page(book_id)
 
             book_url = response.url
-            book_name = get_book_name(book_id)
-            fetch_book_comments(book_id, book_name)
+            book_name = get_book_name(book_id, soup)
+            fetch_book_comments(book_id, book_name, soup)
             download_txt(book_url, book_name)
 
-            img_url, img_name = get_img_url_name(book_id)
+            img_url, img_name = get_img_url_name(book_id, soup)
             download_image(img_url, img_name)
 
             book_id += 1
