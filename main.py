@@ -9,7 +9,7 @@ from bs4 import BeautifulSoup
 from urllib.parse import urljoin, urlsplit, unquote
 
 
-def get_command_line_argument():
+def get_command_line_arguments():
     """parse args"""
     parser = argparse.ArgumentParser(
         description="""Программа скачивает книги. по дефолту будут скачены книги с id 1 по 10 """)
