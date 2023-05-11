@@ -63,10 +63,10 @@ def check_for_redirect(response):
         raise BookRedirectFormatError('Произошел redirect. Перехожу к следующему ID')
 
 
-def download_txt(url, filename, folder='books/'):
+def download_txt(book_id, filename, folder='books/'):
     """Функция для скачивания текстовых файлов.
     Args:
-        url (str): Cсылка на текст, который хочется скачать.
+        book_id (str): ID на книгу, которую хочется скачать.
         filename (str): Имя файла, с которым сохранять.
         folder (str): Папка, куда сохранять.
     Returns:
@@ -74,8 +74,12 @@ def download_txt(url, filename, folder='books/'):
     """
     book_path = Path(folder)
     book_path.mkdir(parents=True, exist_ok=True)
+
+    url = 'https://tululu.org/txt.php'
+    params = {'id': book_id}
     session = requests.Session()
-    response = session.get(url)
+    response = session.get(url, params=params)
+    check_for_redirect(response)
     response.raise_for_status()
     normal_filename = sanitize_filename(filename)
     file_path = os.path.join(folder, normal_filename)
@@ -112,14 +116,23 @@ def get_soup_book_page(book_id):
     return soup
 
 
-def get_book_name(book_id, soup):
-    title_tag = soup.find('td', class_='ow_px_td').find('div', id='content').find('h1')
-    book_title = title_tag.text.split('::')[0].strip()
-    book_name = f'{book_id}.{book_title}.txt'
+class BookRedirectFormatError(HTTPError):
+    pass
 
-    genres_tag = soup.find('span', class_='d_book').find_all('a')
-    genres_text = [x.text for x in genres_tag]
-    return book_name
+
+def get_book_name(book_id, soup):
+    try:
+        title_tag = soup.find('td', class_='ow_px_td').find('div', id='content').find('h1')
+        book_title = title_tag.text.split('::')[0].strip()
+        book_name = f'{book_id}.{book_title}.txt'
+
+        genres_tag = soup.find('span', class_='d_book').find_all('a')
+        genres_text = [x.text for x in genres_tag]
+        return book_name
+    except AttributeError as err:
+        print(err, file=sys.stderr)
+        logging.debug(err)
+        raise BookRedirectFormatError('Перехожу к следующей книге')
 
 
 def fetch_book_comments(book_id, book_name, soup):
@@ -142,26 +155,22 @@ def get_img_url_name(book_id, soup):
     return img_url, img_name
 
 
-class BookRedirectFormatError(HTTPError):
-    pass
-
-
 def fetch_books(start_id, end_id):
     book_id = start_id
     while book_id <= end_id:
         try:
-            url = 'https://tululu.org/txt.php'
-            params = {'id': book_id}
-            session = requests.Session()
-            response = session.get(url, params=params)
-            check_for_redirect(response)
-            response.raise_for_status()
+            # url = 'https://tululu.org/txt.php'
+            # params = {'id': book_id}
+            # session = requests.Session()
+            # response = session.get(url, params=params)
+            # check_for_redirect(response)
+            # response.raise_for_status()
             soup = get_soup_book_page(book_id)
 
-            book_url = response.url
+            # book_url = response.url
             book_name = get_book_name(book_id, soup)
             fetch_book_comments(book_id, book_name, soup)
-            download_txt(book_url, book_name)
+            download_txt(book_id, book_name)
 
             img_url, img_name = get_img_url_name(book_id, soup)
             download_image(img_url, img_name)
