@@ -119,7 +119,6 @@ def get_book_name(book_id, soup):
 
     genres_tag = soup.find('span', class_='d_book').find_all('a')
     genres_text = [x.text for x in genres_tag]
-    print(f'{book_title}\n{genres_text}\n')
     return book_name
 
 
