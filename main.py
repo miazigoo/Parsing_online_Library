@@ -113,27 +113,10 @@ def parse_book_page(book_id):
     response.raise_for_status()
     check_for_redirect(response)
     soup = BeautifulSoup(response.text, 'lxml')
-    my_soup = {
-        'title_tag': soup.find('td', class_='ow_px_td').find('div', id='content').find('h1'),
-        'book_comments': soup.find_all('div', class_='texts'),
-        'img_src': soup.find('div', class_='bookimage').find('img')['src'],
-        'genres_tag': soup.find('span', class_='d_book').find_all('a')
-    }
-    return my_soup
+    return soup
 
 
-def get_book_name(book_id, soup):
-    title_tag = soup['title_tag']
-    book_title = title_tag.text.split('::')[0].strip()
-    book_name = f'{book_id}.{book_title}.txt'
-
-    genres_tag = soup['genres_tag']
-    genres_text = [x.text for x in genres_tag]
-    return book_name
-
-
-def fetch_book_comments(book_name, soup):
-    book_comments = soup['book_comments']
+def fetch_book_comments(book_name, book_comments):
     book_path = Path('comments')
     book_path.mkdir(parents=True, exist_ok=True)
     normal_book_name = sanitize_filename(book_name)
@@ -145,9 +128,8 @@ def fetch_book_comments(book_name, soup):
     return 'success'
 
 
-def get_img_url_name(book_id, soup):
+def get_img_url_name(book_id, img_src):
     url = f'https://tululu.org/b{book_id}/'
-    img_src = soup['img_src']
     img_url = urljoin(url, img_src)
     img_name, _ = get_filename_and_ext(img_url)
     return img_url, img_name
@@ -158,12 +140,18 @@ def fetch_books(start_id, end_id):
     while book_id <= end_id:
         try:
             soup = parse_book_page(book_id)
+            title_tag = soup.find('td', class_='ow_px_td').find('div', id='content').find('h1')
+            book_comments = soup.find_all('div', class_='texts')
+            img_src = soup.find('div', class_='bookimage').find('img')['src']
+            genres_tag = soup.find('span', class_='d_book').find_all('a')
+            book_title = title_tag.text.split('::')[0].strip()
+            book_name = f'{book_id}.{book_title}.txt'
+            genres_text = [x.text for x in genres_tag]
 
-            book_name = get_book_name(book_id, soup)
-            fetch_book_comments(book_name, soup)
+            fetch_book_comments(book_name, book_comments)
             download_txt(book_id, book_name)
 
-            img_url, img_name = get_img_url_name(book_id, soup)
+            img_url, img_name = get_img_url_name(book_id, img_src)
             download_image(img_url, img_name)
 
             book_id += 1
