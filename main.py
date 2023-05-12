@@ -14,22 +14,17 @@ from bs4 import BeautifulSoup
 from urllib.parse import urljoin, urlsplit, unquote
 
 
-def retry(cooloff=5, exc_type=[requests.exceptions.ConnectionError]):
+def retry(cooloff=5, exc_type=requests.exceptions.ConnectionError):
     def real_decorator(function):
         def wrapper(*args, **kwargs):
             while True:
                 try:
                     return function(*args, **kwargs)
-                except Exception as e:
-                    if e.__class__ in exc_type:
-                        print("Сбой подключения. Произвожу попытку нового подключения.", e, file=sys.stderr)
-                        logging.debug(e)
-                        time.sleep(cooloff)
-                    else:
-                        raise e
-
+                except exc_type as e:
+                    print("Сбой подключения. Произвожу попытку нового подключения.", e, file=sys.stderr)
+                    logging.debug(e)
+                    time.sleep(cooloff)
         return wrapper
-
     return real_decorator
 
 
