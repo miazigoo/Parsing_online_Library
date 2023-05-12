@@ -127,13 +127,6 @@ def fetch_book_comments(book_name, book_comments):
                 file.write(comment.span.string + '\n')
 
 
-def get_img_url_name(book_id, img_src):
-    url = f'https://tululu.org/b{book_id}/'
-    img_url = urljoin(url, img_src)
-    img_name, _ = get_filename_and_ext(img_url)
-    return img_url, img_name
-
-
 def fetch_books(start_id, end_id):
     book_id = start_id
     while book_id <= end_id:
@@ -150,7 +143,9 @@ def fetch_books(start_id, end_id):
             fetch_book_comments(book_name, book_comments)
             download_txt(book_id, book_name)
 
-            img_url, img_name = get_img_url_name(book_id, img_src)
+            book_url = f'https://tululu.org/b{book_id}/'
+            img_url = urljoin(book_url, img_src)
+            img_name, _ = get_filename_and_ext(img_url)
             download_image(img_url, img_name)
 
             book_id += 1
