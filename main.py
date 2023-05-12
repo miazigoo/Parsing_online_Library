@@ -14,6 +14,9 @@ from bs4 import BeautifulSoup
 from urllib.parse import urljoin, urlsplit, unquote
 
 
+SESSION = requests.Session()
+
+
 def retry(cooloff=5, exc_type=requests.exceptions.ConnectionError):
     def real_decorator(function):
         def wrapper(*args, **kwargs):
@@ -70,8 +73,7 @@ def download_txt(book_id, filename, folder='books/'):
 
     url = 'https://tululu.org/txt.php'
     params = {'id': book_id}
-    session = requests.Session()
-    response = session.get(url, params=params)
+    response = SESSION.get(url, params=params)
     check_for_redirect(response)
     response.raise_for_status()
     normal_filename = sanitize_filename(filename)
@@ -92,8 +94,7 @@ def download_image(url, filename, folder='images/'):
     """
     book_path = Path(folder)
     book_path.mkdir(parents=True, exist_ok=True)
-    session = requests.Session()
-    response = session.get(url)
+    response = SESSION.get(url)
     response.raise_for_status()
     normal_filename = sanitize_filename(filename)
     file_path = os.path.join(folder, normal_filename)
@@ -108,8 +109,7 @@ class BookRedirectFormatError(HTTPError):
 @retry()
 def parse_book_page(book_id):
     url = f'https://tululu.org/b{book_id}/'
-    session = requests.Session()
-    response = session.get(url)
+    response = SESSION.get(url)
     response.raise_for_status()
     check_for_redirect(response)
     soup = BeautifulSoup(response.text, 'lxml')
@@ -125,7 +125,6 @@ def fetch_book_comments(book_name, book_comments):
         for comment in book_comments:
             if comment.span.string:
                 file.write(comment.span.string + '\n')
-    return 'success'
 
 
 def get_img_url_name(book_id, img_src):
