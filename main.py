@@ -63,6 +63,7 @@ def check_for_redirect(response):
         raise BookRedirectFormatError('Произошел redirect. Перехожу к следующему ID')
 
 
+@retry()
 def download_txt(book_id, filename, folder='books/'):
     """Функция для скачивания текстовых файлов.
     Args:
@@ -87,6 +88,7 @@ def download_txt(book_id, filename, folder='books/'):
         file.write(response.content)
 
 
+@retry()
 def download_image(url, filename, folder='images/'):
     """Функция для скачивания изображений.
     Args:
@@ -111,6 +113,7 @@ class BookRedirectFormatError(HTTPError):
     pass
 
 
+@retry()
 def parse_book_page(book_id):
     try:
         url = f'https://tululu.org/b{book_id}/'
@@ -182,7 +185,6 @@ def fetch_books(start_id, end_id):
             book_id += 1
 
 
-@retry()
 def main():
     args = get_command_line_arguments()
     start_id, end_id = args.start_id, args.end_id
