@@ -107,23 +107,18 @@ class BookRedirectFormatError(HTTPError):
 
 @retry()
 def parse_book_page(book_id):
-    try:
-        url = f'https://tululu.org/b{book_id}/'
-        session = requests.Session()
-        response = session.get(url)
-        response.raise_for_status()
-        soup = BeautifulSoup(response.text, 'lxml')
-        my_soup = {
-            'title_tag': soup.find('td', class_='ow_px_td').find('div', id='content').find('h1'),
-            'book_comments': soup.find_all('div', class_='texts'),
-            'img_src': soup.find('div', class_='bookimage').find('img')['src'],
-            'genres_tag': soup.find('span', class_='d_book').find_all('a')
-        }
-        return my_soup
-    except AttributeError as err:
-        print(err, file=sys.stderr)
-        logging.debug(err)
-        raise BookRedirectFormatError('Перехожу к следующей книге')
+    url = f'https://tululu.org/b{book_id}/'
+    session = requests.Session()
+    response = session.get(url)
+    response.raise_for_status()
+    soup = BeautifulSoup(response.text, 'lxml')
+    my_soup = {
+        'title_tag': soup.find('td', class_='ow_px_td').find('div', id='content').find('h1'),
+        'book_comments': soup.find_all('div', class_='texts'),
+        'img_src': soup.find('div', class_='bookimage').find('img')['src'],
+        'genres_tag': soup.find('span', class_='d_book').find_all('a')
+    }
+    return my_soup
 
 
 def get_book_name(book_id, soup):
@@ -161,7 +156,13 @@ def fetch_books(start_id, end_id):
     book_id = start_id
     while book_id <= end_id:
         try:
-            soup = parse_book_page(book_id)
+            try:
+                soup = parse_book_page(book_id)
+            except AttributeError as error:
+                print(f'Книга с ID {book_id} не найдена. Перехожу к следующей книге. ',
+                      error, file=sys.stderr)
+                logging.debug(error)
+                book_id += 1
 
             book_name = get_book_name(book_id, soup)
             fetch_book_comments(book_name, soup)
