@@ -124,7 +124,7 @@ def fetch_book_comments(book_name, book_comments):
     with open(f"{file_path}", "w", encoding='utf-8') as file:
         for comment in book_comments:
             if comment.span.string:
-                file.write(comment.span.string + '\n')
+                file.write(f'{comment.span.string} \n')
 
 
 def fetch_books(start_id, end_id):
