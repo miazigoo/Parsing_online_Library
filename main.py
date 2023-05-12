@@ -14,10 +14,7 @@ from bs4 import BeautifulSoup
 from urllib.parse import urljoin, urlsplit, unquote
 
 
-def retry(cooloff=5, exc_type=None):
-    if not exc_type:
-        exc_type = [requests.exceptions.ConnectionError]
-
+def retry(cooloff=5, exc_type=[requests.exceptions.ConnectionError]):
     def real_decorator(function):
         def wrapper(*args, **kwargs):
             while True:
@@ -172,7 +169,7 @@ def fetch_books(start_id, end_id):
             soup = parse_book_page(book_id)
 
             book_name = get_book_name(book_id, soup)
-            fetch_book_comments(book_id, book_name, soup)
+            fetch_book_comments(book_name, soup)
             download_txt(book_id, book_name)
 
             img_url, img_name = get_img_url_name(book_id, soup)
