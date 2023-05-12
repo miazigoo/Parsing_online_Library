@@ -111,6 +111,7 @@ def parse_book_page(book_id):
     session = requests.Session()
     response = session.get(url)
     response.raise_for_status()
+    check_for_redirect(response)
     soup = BeautifulSoup(response.text, 'lxml')
     my_soup = {
         'title_tag': soup.find('td', class_='ow_px_td').find('div', id='content').find('h1'),
@@ -156,13 +157,7 @@ def fetch_books(start_id, end_id):
     book_id = start_id
     while book_id <= end_id:
         try:
-            try:
-                soup = parse_book_page(book_id)
-            except AttributeError as error:
-                print(f'Книга с ID {book_id} не найдена. Перехожу к следующей книге. ',
-                      error, file=sys.stderr)
-                logging.debug(error)
-                book_id += 1
+            soup = parse_book_page(book_id)
 
             book_name = get_book_name(book_id, soup)
             fetch_book_comments(book_name, soup)
