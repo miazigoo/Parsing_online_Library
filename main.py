@@ -6,7 +6,7 @@ import requests
 import argparse
 import logging
 
-from tqdm import tqdm
+from tqdm import trange
 from pathlib import Path
 from os.path import split, splitext
 from pathvalidate import sanitize_filename
@@ -141,29 +141,30 @@ def fetch_book_comments(book_name, book_comments):
 
 def fetch_books(start_id, end_id):
     book_id = start_id
-    for book in tqdm(range(start_id, (end_id + 1))):
-        try:
-            book_name, img_src, book_comments = parse_book_page(book_id)
+    with trange(start_id, (end_id + 1)) as t_range:
+        for book in t_range:
+            try:
+                book_name, img_src, book_comments = parse_book_page(book_id)
 
-            fetch_book_comments(book_name, book_comments)
-            download_txt(book_id, book_name)
+                fetch_book_comments(book_name, book_comments)
+                download_txt(book_id, book_name)
 
-            book_url = f'https://tululu.org/b{book_id}/'
-            img_url = urljoin(book_url, img_src)
-            img_name, _ = get_filename_and_ext(img_url)
-            download_image(img_url, img_name)
+                book_url = f'https://tululu.org/b{book_id}/'
+                img_url = urljoin(book_url, img_src)
+                img_name, _ = get_filename_and_ext(img_url)
+                download_image(img_url, img_name)
 
-            book_id += 1
-        except BookRedirectFormatError as error:
-            print(error, file=sys.stderr)
-            logging.debug(error)
-            book_id += 1
-            continue
-        except HTTPError as error:
-            print('Битая ссылка. Перехожу к следующей. ', error, file=sys.stderr)
-            logging.debug(error)
-            book_id += 1
-            continue
+                book_id += 1
+            except BookRedirectFormatError as error:
+                print(error, file=sys.stderr)
+                logging.debug(error)
+                book_id += 1
+                continue
+            except HTTPError as error:
+                print('Битая ссылка. Перехожу к следующей. ', error, file=sys.stderr)
+                logging.debug(error)
+                book_id += 1
+                continue
 
 
 def main():
