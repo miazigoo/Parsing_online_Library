@@ -13,7 +13,6 @@ from requests import HTTPError
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin, urlsplit, unquote
 
-
 SESSION = requests.Session()
 
 
@@ -27,7 +26,9 @@ def retry(cooloff=5, exc_type=requests.exceptions.ConnectionError):
                     print("Сбой подключения. Произвожу попытку нового подключения.", e, file=sys.stderr)
                     logging.debug(e)
                     time.sleep(cooloff)
+
         return wrapper
+
     return real_decorator
 
 
@@ -113,7 +114,14 @@ def parse_book_page(book_id):
     response.raise_for_status()
     check_for_redirect(response)
     soup = BeautifulSoup(response.text, 'lxml')
-    return soup
+    title_tag = soup.find('td', class_='ow_px_td').find('div', id='content').find('h1')
+    book_comments = soup.find_all('div', class_='texts')
+    img_src = soup.find('div', class_='bookimage').find('img')['src']
+    genres_tag = soup.find('span', class_='d_book').find_all('a')
+    book_title = title_tag.text.split('::')[0].strip()
+    book_name = f'{book_id}.{book_title}.txt'
+    genres_text = [x.text for x in genres_tag]
+    return book_name, img_src, book_comments
 
 
 def fetch_book_comments(book_name, book_comments):
@@ -131,14 +139,7 @@ def fetch_books(start_id, end_id):
     book_id = start_id
     while book_id <= end_id:
         try:
-            soup = parse_book_page(book_id)
-            title_tag = soup.find('td', class_='ow_px_td').find('div', id='content').find('h1')
-            book_comments = soup.find_all('div', class_='texts')
-            img_src = soup.find('div', class_='bookimage').find('img')['src']
-            genres_tag = soup.find('span', class_='d_book').find_all('a')
-            book_title = title_tag.text.split('::')[0].strip()
-            book_name = f'{book_id}.{book_title}.txt'
-            genres_text = [x.text for x in genres_tag]
+            book_name, img_src, book_comments = parse_book_page(book_id)
 
             fetch_book_comments(book_name, book_comments)
             download_txt(book_id, book_name)
