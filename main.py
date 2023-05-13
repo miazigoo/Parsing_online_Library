@@ -1,4 +1,5 @@
 import os
+import random
 import sys
 import time
 
@@ -16,9 +17,11 @@ from urllib.parse import urljoin, urlsplit, unquote
 SESSION = requests.Session()
 
 
-def retry(cooloff=5, exc_type=requests.exceptions.ConnectionError):
+def retry(exc_type=requests.exceptions.ConnectionError):
     def real_decorator(function):
         def wrapper(*args, **kwargs):
+            cooloff = 5
+            cooloff_list = [5, 10, 15, 20, 30]
             while True:
                 try:
                     return function(*args, **kwargs)
@@ -26,6 +29,7 @@ def retry(cooloff=5, exc_type=requests.exceptions.ConnectionError):
                     print("Сбой подключения. Произвожу попытку нового подключения.", e, file=sys.stderr)
                     logging.debug(e)
                     time.sleep(cooloff)
+                    cooloff = random.choice(cooloff_list)
 
         return wrapper
 
@@ -137,7 +141,7 @@ def fetch_book_comments(book_name, book_comments):
 
 def fetch_books(start_id, end_id):
     book_id = start_id
-    while book_id <= end_id:
+    for book in range(start_id, (end_id + 1)):
         try:
             book_name, img_src, book_comments = parse_book_page(book_id)
 
@@ -154,6 +158,12 @@ def fetch_books(start_id, end_id):
             print(error, file=sys.stderr)
             logging.debug(error)
             book_id += 1
+            continue
+        except HTTPError as error:
+            print('Битая ссылка. Перехожу к следующей. ', error, file=sys.stderr)
+            logging.debug(error)
+            book_id += 1
+            continue
 
 
 def main():
