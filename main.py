@@ -2,11 +2,11 @@ import os
 import random
 import sys
 import time
-
 import requests
 import argparse
 import logging
 
+from tqdm import tqdm
 from pathlib import Path
 from os.path import split, splitext
 from pathvalidate import sanitize_filename
@@ -141,7 +141,7 @@ def fetch_book_comments(book_name, book_comments):
 
 def fetch_books(start_id, end_id):
     book_id = start_id
-    for book in range(start_id, (end_id + 1)):
+    for book in tqdm(range(start_id, (end_id + 1))):
         try:
             book_name, img_src, book_comments = parse_book_page(book_id)
 
