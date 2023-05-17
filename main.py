@@ -21,7 +21,7 @@ def retry(exc_type=requests.exceptions.ConnectionError):
     def real_decorator(function):
         def wrapper(*args, **kwargs):
             cooloff = 5
-            cooloff_list = [5, 10, 15, 20, 30]
+            cooloff_random = [5, 10, 15, 20, 30]
             while True:
                 try:
                     return function(*args, **kwargs)
@@ -29,7 +29,7 @@ def retry(exc_type=requests.exceptions.ConnectionError):
                     print("Сбой подключения. Произвожу попытку нового подключения.", e, file=sys.stderr)
                     logging.debug(e)
                     time.sleep(cooloff)
-                    cooloff = random.choice(cooloff_list)
+                    cooloff = random.choice(cooloff_random)
 
         return wrapper
 
@@ -111,12 +111,7 @@ class BookRedirectFormatError(HTTPError):
     pass
 
 
-@retry()
-def parse_book_page(book_id):
-    url = f'https://tululu.org/b{book_id}/'
-    response = SESSION.get(url)
-    response.raise_for_status()
-    check_for_redirect(response)
+def parse_book_page(book_id, response):
     soup = BeautifulSoup(response.text, 'lxml')
     title_tag = soup.find('td', class_='ow_px_td').find('div', id='content').find('h1')
     book_comments = soup.find_all('div', class_='texts')
@@ -139,12 +134,17 @@ def fetch_book_comments(book_name, book_comments):
                 file.write(f'{comment.span.string} \n')
 
 
+@retry()
 def fetch_books(start_id, end_id):
     book_id = start_id
-    with trange(start_id, (end_id + 1)) as t_range:
+    with trange(start_id, (end_id + 1), colour="green") as t_range:
         for book in t_range:
             try:
-                book_name, img_src, book_comments = parse_book_page(book_id)
+                url = f'https://tululu.org/b{book_id}/'
+                response = SESSION.get(url)
+                response.raise_for_status()
+                check_for_redirect(response)
+                book_name, img_src, book_comments = parse_book_page(book_id, response)
 
                 fetch_book_comments(book_name, book_comments)
                 download_txt(book_id, book_name)
