@@ -46,6 +46,10 @@ def get_command_line_arguments():
         description="""Программа скачивает книги. По дефолту будут скачены все книги  """)
     parser.add_argument('--start_page', nargs='?', help='Введите с какой страницы скачивать книги: ', type=int)
     parser.add_argument('--end_page', nargs='?', help='Введите до какой страницы скачивать книги: ', type=int)
+    parser.add_argument('--dest_folder', nargs='?', help='путь к каталогу с результатами парсинга: ')
+    parser.add_argument('--skip_imgs', help='не скачивать картинки.', action='store_true')
+    parser.add_argument('--skip_txt', help='не скачивать книги.', action='store_true')
+    parser.add_argument('--json_path', nargs='?', help='указать свой путь к *.json файлу с результатами: ')
     args = parser.parse_args()
 
     return args
@@ -127,8 +131,8 @@ def parse_book_page(book_id, response):
     return book_name, img_src, comments_text, genres_text, book_title, book_author
 
 
-def fetch_books_info(books_info, start_page, end_page):
-    book_path = Path('books_INFO')
+def fetch_books_info(books_info, start_page, end_page, folder='books_INFO'):
+    book_path = Path(folder)
     book_path.mkdir(parents=True, exist_ok=True)
     file_name = sanitize_filename(f'books_INFO_page_{start_page}_{end_page}.json')
     file_path = os.path.join(book_path, file_name)
@@ -143,14 +147,14 @@ def get_book_id(book_url):
     return book_id
 
 
-logging.basicConfig(level=logging.INFO)
-
-
 @retry()
-def fetch_books(start_page, end_page, category_url):
+def fetch_books(start_page, end_page, category_url, args):
     books_info = []
+    dest_folder, skip_imgs, skip_txt, json_path = args.dest_folder, args.skip_imgs, args.skip_txt, args.json_path
+    print('dest_folder, skip_imgs, skip_txt, json_path', dest_folder, skip_imgs, skip_txt, json_path)
     with trange(start_page, end_page, colour="blue") as t_range:
         for page in t_range:
+            logging.basicConfig(level=logging.INFO)
             logging.info(f'Загружаем со страницы №{page}')
             try:
                 page_url = f'{category_url}{page}'
@@ -167,12 +171,21 @@ def fetch_books(start_page, end_page, category_url):
                     check_for_redirect(response_book_page)
 
                     book_name, img_src, comments_text, \
-                    genres_text, book_title, book_author = parse_book_page(book_id, response_book_page)
-                    download_txt(book_id, book_name)
+                        genres_text, book_title, book_author = parse_book_page(book_id, response_book_page)
+                    if skip_txt is False:
+                        if dest_folder:
+                            download_txt(book_id, book_name, folder=dest_folder)
+                        else:
+                            download_txt(book_id, book_name)
 
                     img_url = urljoin(book_url, img_src)
                     img_name, _ = get_filename_and_ext(img_url)
-                    download_image(img_url, img_name)
+
+                    if skip_imgs is False:
+                        if dest_folder:
+                            download_image(img_url, img_name, folder=dest_folder)
+                        else:
+                            download_image(img_url, img_name)
 
                     normal_img_filename = sanitize_filename(img_name)
                     normal_book_filename = sanitize_filename(img_name)
@@ -194,14 +207,17 @@ def fetch_books(start_page, end_page, category_url):
                 print('Битая ссылка. Перехожу к следующей. ', error, file=sys.stderr)
                 logging.debug(error)
                 continue
-    fetch_books_info(books_info, start_page, end_page)
+    if json_path:
+        fetch_books_info(books_info, start_page, end_page, folder=json_path)
+    else:
+        fetch_books_info(books_info, start_page, end_page)
 
 
 def main():
     env = Env()
     env.read_env()
-    url = env.str('TUTULU_CATEGOTY_URL', 'https://tululu.org/l55/')
-    response = SESSION.get(url)
+    category_url = env.str('TUTULU_CATEGOTY_URL', 'https://tululu.org/l55/')
+    response = SESSION.get(category_url)
     response.raise_for_status()
     max_page, select_page = parse_max_page(response)
     args = get_command_line_arguments()
@@ -210,7 +226,7 @@ def main():
         start_page = select_page
     if not end_page:
         end_page = max_page
-    fetch_books(start_page, end_page, url)
+    fetch_books(start_page, end_page, category_url, args)
 
 
 if __name__ == '__main__':
