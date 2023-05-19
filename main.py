@@ -8,6 +8,7 @@ import argparse
 import logging
 
 from tqdm import trange
+from environs import Env
 from pathlib import Path
 from os.path import split, splitext
 from pathvalidate import sanitize_filename
@@ -15,7 +16,7 @@ from requests import HTTPError
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin, urlsplit, unquote
 
-from fetch_tululu_by_category import parse_url_book_by_category
+from parse_tululu_by_category import parse_url_book_by_category, parse_max_page
 
 SESSION = requests.Session()
 
@@ -42,11 +43,9 @@ def retry(exc_type=requests.exceptions.ConnectionError):
 def get_command_line_arguments():
     """parse args"""
     parser = argparse.ArgumentParser(
-        description="""Программа скачивает книги. По дефолту будут скачены книги со страницы 1 - 10 """)
-    parser.add_argument('start_page', nargs='?', help='Введите с какой страницы скачивать книги: ',
-                        default=1, type=int)
-    parser.add_argument('end_page', nargs='?', help='Введите до какой страницы скачивать книги: ',
-                        default=3, type=int)
+        description="""Программа скачивает книги. По дефолту будут скачены все книги  """)
+    parser.add_argument('--start_page', nargs='?', help='Введите с какой страницы скачивать книги: ', type=int)
+    parser.add_argument('--end_page', nargs='?', help='Введите до какой страницы скачивать книги: ', type=int)
     args = parser.parse_args()
 
     return args
@@ -116,12 +115,12 @@ class BookRedirectFormatError(HTTPError):
 
 def parse_book_page(book_id, response):
     soup = BeautifulSoup(response.text, 'lxml')
-    title_tag = soup.select_one('#content > h1')
+    title_tag = soup.select_one('#content > h1').text
     book_comments = soup.select('.texts .black')
     img_src = soup.select_one('div.bookimage img')['src']
     genres_tag = soup.select('span.d_book a')
-    book_title = title_tag.text.split('::')[0].strip()
-    book_author = title_tag.text.split('::')[1].strip()
+    book_title = title_tag.split('::')[0].strip()
+    book_author = title_tag.split('::')[1].strip()
     book_name = f'{book_id}.{book_title}.txt'
     genres_text = [x.text for x in genres_tag]
     comments_text = [com.text for com in book_comments]
@@ -144,17 +143,20 @@ def get_book_id(book_url):
     return book_id
 
 
+logging.basicConfig(level=logging.INFO)
+
+
 @retry()
 def fetch_books(start_page, end_page, category_url):
     books_info = []
-    with trange(start_page, end_page, colour="green") as t_range:
+    with trange(start_page, end_page, colour="blue") as t_range:
         for page in t_range:
+            logging.info(f'Загружаем со страницы №{page}')
             try:
-                url = f'{category_url}{page}'
-                response = SESSION.get(url)
+                page_url = f'{category_url}{page}'
+                response = SESSION.get(page_url)
                 response.raise_for_status()
                 check_for_redirect(response)
-
                 book_urls = parse_url_book_by_category(response)
 
                 for book_url in book_urls:
@@ -162,10 +164,10 @@ def fetch_books(start_page, end_page, category_url):
                     url = f'https://tululu.org/b{book_id}/'
                     response_book_page = SESSION.get(url)
                     response_book_page.raise_for_status()
-                    check_for_redirect(response)
+                    check_for_redirect(response_book_page)
 
                     book_name, img_src, comments_text, \
-                        genres_text, book_title, book_author = parse_book_page(book_id, response_book_page)
+                    genres_text, book_title, book_author = parse_book_page(book_id, response_book_page)
                     download_txt(book_id, book_name)
 
                     img_url = urljoin(book_url, img_src)
@@ -173,9 +175,7 @@ def fetch_books(start_page, end_page, category_url):
                     download_image(img_url, img_name)
 
                     normal_img_filename = sanitize_filename(img_name)
-                    # img_path = os.path.join('images', normal_img_filename)
                     normal_book_filename = sanitize_filename(img_name)
-                    # book_path = os.path.join('books', normal_book_filename)
                     books_info.append(
                         {
                             'title': book_title,
@@ -198,9 +198,18 @@ def fetch_books(start_page, end_page, category_url):
 
 
 def main():
+    env = Env()
+    env.read_env()
+    url = env.str('TUTULU_CATEGOTY_URL', 'https://tululu.org/l55/')
+    response = SESSION.get(url)
+    response.raise_for_status()
+    max_page, select_page = parse_max_page(response)
     args = get_command_line_arguments()
-    url = 'https://tululu.org/l55/'
     start_page, end_page = args.start_page, args.end_page
+    if not start_page:
+        start_page = select_page
+    if not end_page:
+        end_page = max_page
     fetch_books(start_page, end_page, url)
 
 
