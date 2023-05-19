@@ -1,3 +1,4 @@
+import json
 import os
 import random
 import sys
@@ -13,6 +14,8 @@ from pathvalidate import sanitize_filename
 from requests import HTTPError
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin, urlsplit, unquote
+
+from fetch_tululu_by_category import parse_url_book_by_category
 
 SESSION = requests.Session()
 
@@ -39,11 +42,11 @@ def retry(exc_type=requests.exceptions.ConnectionError):
 def get_command_line_arguments():
     """parse args"""
     parser = argparse.ArgumentParser(
-        description="""Программа скачивает книги. по дефолту будут скачены книги с id 1 по 10 """)
-    parser.add_argument('start_id', nargs='?', help='Введите с какого id скачивать книги: ',
+        description="""Программа скачивает книги. По дефолту будут скачены книги со страницы 1 - 10 """)
+    parser.add_argument('start_page', nargs='?', help='Введите с какой страницы скачивать книги: ',
                         default=1, type=int)
-    parser.add_argument('end_id', nargs='?', help='Введите до какого id скачивать книги: ',
-                        default=10, type=int)
+    parser.add_argument('end_page', nargs='?', help='Введите до какой страницы скачивать книги: ',
+                        default=3, type=int)
     args = parser.parse_args()
 
     return args
@@ -113,64 +116,92 @@ class BookRedirectFormatError(HTTPError):
 
 def parse_book_page(book_id, response):
     soup = BeautifulSoup(response.text, 'lxml')
-    title_tag = soup.find('td', class_='ow_px_td').find('div', id='content').find('h1')
-    book_comments = soup.find_all('div', class_='texts')
-    img_src = soup.find('div', class_='bookimage').find('img')['src']
-    genres_tag = soup.find('span', class_='d_book').find_all('a')
+    title_tag = soup.select_one('#content > h1')
+    book_comments = soup.select('.texts .black')
+    img_src = soup.select_one('div.bookimage img')['src']
+    genres_tag = soup.select('span.d_book a')
     book_title = title_tag.text.split('::')[0].strip()
+    book_author = title_tag.text.split('::')[1].strip()
     book_name = f'{book_id}.{book_title}.txt'
     genres_text = [x.text for x in genres_tag]
-    return book_name, img_src, book_comments
+    comments_text = [com.text for com in book_comments]
+    return book_name, img_src, comments_text, genres_text, book_title, book_author
 
 
-def fetch_book_comments(book_name, book_comments):
-    book_path = Path('comments')
+def fetch_books_info(books_info, start_page, end_page):
+    book_path = Path('books_INFO')
     book_path.mkdir(parents=True, exist_ok=True)
-    normal_book_name = sanitize_filename(book_name)
-    file_path = os.path.join(book_path, normal_book_name)
+    file_name = sanitize_filename(f'books_INFO_page_{start_page}_{end_page}.json')
+    file_path = os.path.join(book_path, file_name)
     with open(f"{file_path}", "w", encoding='utf-8') as file:
-        for comment in book_comments:
-            if comment.span.string:
-                file.write(f'{comment.span.string} \n')
+        json.dump(books_info, file, ensure_ascii=False, indent=4)
+
+
+def get_book_id(book_url):
+    url_address = urlsplit(book_url).path
+    encoding_url = unquote(url_address)
+    book_id = encoding_url.split('b')[1].replace('/', '')
+    return book_id
 
 
 @retry()
-def fetch_books(start_id, end_id):
-    book_id = start_id
-    with trange(start_id, (end_id + 1), colour="green") as t_range:
-        for book in t_range:
+def fetch_books(start_page, end_page, category_url):
+    books_info = []
+    with trange(start_page, end_page, colour="green") as t_range:
+        for page in t_range:
             try:
-                url = f'https://tululu.org/b{book_id}/'
+                url = f'{category_url}{page}'
                 response = SESSION.get(url)
                 response.raise_for_status()
                 check_for_redirect(response)
-                book_name, img_src, book_comments = parse_book_page(book_id, response)
 
-                fetch_book_comments(book_name, book_comments)
-                download_txt(book_id, book_name)
+                book_urls = parse_url_book_by_category(response)
 
-                book_url = f'https://tululu.org/b{book_id}/'
-                img_url = urljoin(book_url, img_src)
-                img_name, _ = get_filename_and_ext(img_url)
-                download_image(img_url, img_name)
+                for book_url in book_urls:
+                    book_id = get_book_id(book_url)
+                    url = f'https://tululu.org/b{book_id}/'
+                    response_book_page = SESSION.get(url)
+                    response_book_page.raise_for_status()
+                    check_for_redirect(response)
 
-                book_id += 1
+                    book_name, img_src, comments_text, \
+                        genres_text, book_title, book_author = parse_book_page(book_id, response_book_page)
+                    download_txt(book_id, book_name)
+
+                    img_url = urljoin(book_url, img_src)
+                    img_name, _ = get_filename_and_ext(img_url)
+                    download_image(img_url, img_name)
+
+                    normal_img_filename = sanitize_filename(img_name)
+                    # img_path = os.path.join('images', normal_img_filename)
+                    normal_book_filename = sanitize_filename(img_name)
+                    # book_path = os.path.join('books', normal_book_filename)
+                    books_info.append(
+                        {
+                            'title': book_title,
+                            'author': book_author,
+                            'img_src': f'images/{normal_img_filename}',
+                            'book_path': f'books/{normal_book_filename}',
+                            'comments': comments_text,
+                            'genres': genres_text
+                        }
+                    )
             except BookRedirectFormatError as error:
                 print(error, file=sys.stderr)
                 logging.debug(error)
-                book_id += 1
                 continue
             except HTTPError as error:
                 print('Битая ссылка. Перехожу к следующей. ', error, file=sys.stderr)
                 logging.debug(error)
-                book_id += 1
                 continue
+    fetch_books_info(books_info, start_page, end_page)
 
 
 def main():
     args = get_command_line_arguments()
-    start_id, end_id = args.start_id, args.end_id
-    fetch_books(start_id, end_id)
+    url = 'https://tululu.org/l55/'
+    start_page, end_page = args.start_page, args.end_page
+    fetch_books(start_page, end_page, url)
 
 
 if __name__ == '__main__':
