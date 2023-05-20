@@ -164,8 +164,8 @@ def parse_book_page(book_id, response):
     return book_name, img_src, comments_text, genres_text, book_title, book_author
 
 
-def fetch_books_info(
-    books_info, start_page, end_page, dest_folder, folder="books_INFO"
+def download_json_content(
+    json_content, start_page, end_page, dest_folder, folder="books_INFO"
 ):
     dest_path = os.path.join(dest_folder, folder)
     book_path = Path(dest_path)
@@ -173,7 +173,7 @@ def fetch_books_info(
     file_name = sanitize_filename(f"books_INFO_page_{start_page}_{end_page}.json")
     file_path = os.path.join(book_path, file_name)
     with open(f"{file_path}", "w", encoding="utf-8") as file:
-        json.dump(books_info, file, ensure_ascii=False, indent=4)
+        json.dump(json_content, file, ensure_ascii=False, indent=4)
 
 
 def get_book_id(book_url):
@@ -203,7 +203,7 @@ def get_response_book_page(url):
 def fetch_books(
     start_page, end_page, category_url, dest_folder, skip_imgs, skip_txt, json_path
 ):
-    books_info = []
+    json_content = []
     with trange(start_page, end_page, colour="blue") as t_range:
         for page in t_range:
             logger.info(f"Загружаем со страницы №{page}")
@@ -236,7 +236,7 @@ def fetch_books(
                     img_path = os.path.join(dest_folder, 'images', normal_img_filename).replace('\\', '/')
                     normal_book_filename = sanitize_filename(book_name)
                     book_path = os.path.join(dest_folder, 'books', normal_book_filename).replace('\\', '/')
-                    books_info.append(
+                    json_content.append(
                         {
                             "title": book_title,
                             "author": book_author,
@@ -254,7 +254,7 @@ def fetch_books(
                 print("Битая ссылка. Перехожу к следующей. ", error, file=sys.stderr)
                 logger.error(error)
                 continue
-    fetch_books_info(books_info, start_page, end_page, dest_folder, folder=json_path)
+    download_json_content(json_content, start_page, end_page, dest_folder, folder=json_path)
 
 
 def main():
