@@ -20,6 +20,8 @@ from parse_tululu_by_category import parse_url_book_by_category, parse_max_page
 
 SESSION = requests.Session()
 
+logger = logging.getLogger(__file__)
+
 
 def retry(exc_type=requests.exceptions.ConnectionError):
     def real_decorator(function):
@@ -182,8 +184,7 @@ def fetch_books(start_page, end_page, category_url, dest_folder, skip_imgs, skip
     books_info = []
     with trange(start_page, end_page, colour="blue") as t_range:
         for page in t_range:
-            logging.basicConfig(level=logging.INFO)
-            logging.info(f"Загружаем со страницы №{page}")
+            logger.info(f"Загружаем со страницы №{page}")
             try:
                 page_url = f"{category_url}{page}"
                 response = SESSION.get(page_url)
@@ -229,16 +230,18 @@ def fetch_books(start_page, end_page, category_url, dest_folder, skip_imgs, skip
                     )
             except BookRedirectFormatError as error:
                 print(error, file=sys.stderr)
-                logging.debug(error)
+                logger.error(error)
                 continue
             except HTTPError as error:
                 print("Битая ссылка. Перехожу к следующей. ", error, file=sys.stderr)
-                logging.debug(error)
+                logger.error(error)
                 continue
     fetch_books_info(books_info, start_page, end_page, dest_folder, folder=json_path)
 
 
 def main():
+    logging.basicConfig(level=logging.ERROR)
+    logger.setLevel(logging.DEBUG)
     env = Env()
     env.read_env()
     category_url = env.str("TUTULU_CATEGOTY_URL", "https://tululu.org/l55/")
