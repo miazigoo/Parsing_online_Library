@@ -208,12 +208,12 @@ def fetch_books(
         for page in t_range:
             logger.info(f"Загружаем со страницы №{page}")
             try:
-                page_url = f"{category_url}{page}"
+                page_url = f"{category_url}{page}ggg"
                 book_urls = get_book_urls(page_url)
 
                 for book_url in book_urls:
                     book_id = get_book_id(book_url)
-                    url = f"https://tululu.org/b{book_id}/"
+                    url = f"https://tululu.org/b{book_id}/ggg"
                     response_book_page = get_response_book_page(url)
                     (
                         book_name,
@@ -263,21 +263,25 @@ def main():
     env = Env()
     env.read_env()
     category_url = env.str("TUTULU_CATEGOTY_URL", "https://tululu.org/l55/")
-    response = SESSION.get(category_url)
-    response.raise_for_status()
-    max_page, start_page_from_parse = parse_max_page(response)
-    args = get_command_line_arguments(max_page, start_page_from_parse)
-    start_page, end_page, dest_folder, skip_imgs, skip_txt, json_path = (
-        args.start_page,
-        args.end_page,
-        args.dest_folder,
-        args.skip_imgs,
-        args.skip_txt,
-        args.json_path,
-    )
-    fetch_books(
-        start_page, end_page, category_url, dest_folder, skip_imgs, skip_txt, json_path
-    )
+    try:
+        response = SESSION.get(category_url)
+        response.raise_for_status()
+        max_page, start_page_from_parse = parse_max_page(response)
+        args = get_command_line_arguments(max_page, start_page_from_parse)
+        start_page, end_page, dest_folder, skip_imgs, skip_txt, json_path = (
+            args.start_page,
+            args.end_page,
+            args.dest_folder,
+            args.skip_imgs,
+            args.skip_txt,
+            args.json_path,
+        )
+        fetch_books(
+            start_page, end_page, category_url, dest_folder, skip_imgs, skip_txt, json_path
+        )
+    except HTTPError as error:
+        print("Битая или не верная ссылка. Проверьте правильность ввода ", error, file=sys.stderr)
+        logger.error(error)
 
 
 if __name__ == "__main__":
