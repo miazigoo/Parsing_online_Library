@@ -143,6 +143,7 @@ cython_debug/
 /books/
 /images/
 /comments/
+/Parse/
 /books_INFO/
 test.py
 bs4_tutorial.py

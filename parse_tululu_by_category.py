@@ -14,7 +14,7 @@ def parse_url_book_by_category(response):
 def parse_max_page(response):
     soup = BeautifulSoup(response.text, "lxml")
     pages = soup.select(".center a.npage")
-    max_page = int(pages[-1])
+    max_page = int(pages[-1].text)
     start_page = int(soup.select_one(".center .npage_select").text)
 
     return max_page, start_page

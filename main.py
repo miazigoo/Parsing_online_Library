@@ -44,7 +44,7 @@ def retry(exc_type=requests.exceptions.ConnectionError):
     return real_decorator
 
 
-def get_command_line_arguments():
+def get_command_line_arguments(max_page, start_page_from_parse):
     """parse args"""
     parser = argparse.ArgumentParser(
         description="""Программа скачивает книги. По дефолту будут скачены все книги  """
@@ -54,15 +54,18 @@ def get_command_line_arguments():
         nargs="?",
         help="Введите с какой страницы скачивать книги: ",
         type=int,
+        default=start_page_from_parse,
     )
     parser.add_argument(
         "--end_page",
         nargs="?",
         help="Введите до какой страницы скачивать книги: ",
         type=int,
+        default=max_page,
     )
     parser.add_argument(
-        "--dest_folder", nargs="?", help="путь к каталогу с результатами парсинга: "
+        "--dest_folder", nargs="?", help="путь к каталогу с результатами парсинга: ",
+        default='Parse',
     )
     parser.add_argument(
         "--skip_imgs", help="не скачивать картинки.", action="store_true"
@@ -72,6 +75,7 @@ def get_command_line_arguments():
         "--json_path",
         nargs="?",
         help="указать свой путь к *.json файлу с результатами: ",
+        default='books_INFO',
     )
     args = parser.parse_args()
 
@@ -93,7 +97,7 @@ def check_for_redirect(response):
 
 
 @retry()
-def download_txt(book_id, filename, folder="books/"):
+def download_txt(book_id, filename, dest_folder, folder="books/"):
     """Функция для скачивания текстовых файлов.
     Args:
         book_id (str): ID на книгу, которую хочется скачать.
@@ -102,7 +106,8 @@ def download_txt(book_id, filename, folder="books/"):
     Returns:
         str: Путь до файла, куда сохранён текст.
     """
-    book_path = Path(folder)
+    dest_path = os.path.join(dest_folder, folder)
+    book_path = Path(dest_path)
     book_path.mkdir(parents=True, exist_ok=True)
 
     url = "https://tululu.org/txt.php"
@@ -111,13 +116,13 @@ def download_txt(book_id, filename, folder="books/"):
     check_for_redirect(response)
     response.raise_for_status()
     normal_filename = sanitize_filename(filename)
-    file_path = os.path.join(folder, normal_filename)
+    file_path = os.path.join(book_path, normal_filename)
     with open(f"{file_path}", "wb") as file:
         file.write(response.content)
 
 
 @retry()
-def download_image(url, filename, folder="images/"):
+def download_image(url, filename, dest_folder, folder="images/"):
     """Функция для скачивания изображений.
     Args:
         url (str): Cсылка на картинку, которую хочется скачать.
@@ -126,12 +131,13 @@ def download_image(url, filename, folder="images/"):
     Returns:
         str: Путь до файла, куда сохранён текст.
     """
-    book_path = Path(folder)
+    dest_path = os.path.join(dest_folder, folder)
+    book_path = Path(dest_path)
     book_path.mkdir(parents=True, exist_ok=True)
     response = SESSION.get(url)
     response.raise_for_status()
     normal_filename = sanitize_filename(filename)
-    file_path = os.path.join(folder, normal_filename)
+    file_path = os.path.join(book_path, normal_filename)
     with open(f"{file_path}", "wb") as file:
         file.write(response.content)
 
@@ -154,8 +160,9 @@ def parse_book_page(book_id, response):
     return book_name, img_src, comments_text, genres_text, book_title, book_author
 
 
-def fetch_books_info(books_info, start_page, end_page, folder="books_INFO"):
-    book_path = Path(folder)
+def fetch_books_info(books_info, start_page, end_page, dest_folder, folder="books_INFO"):
+    dest_path = os.path.join(dest_folder, folder)
+    book_path = Path(dest_path)
     book_path.mkdir(parents=True, exist_ok=True)
     file_name = sanitize_filename(f"books_INFO_page_{start_page}_{end_page}.json")
     file_path = os.path.join(book_path, file_name)
@@ -171,14 +178,8 @@ def get_book_id(book_url):
 
 
 @retry()
-def fetch_books(start_page, end_page, category_url, args):
+def fetch_books(start_page, end_page, category_url, dest_folder, skip_imgs, skip_txt, json_path):
     books_info = []
-    dest_folder, skip_imgs, skip_txt, json_path = (
-        args.dest_folder,
-        args.skip_imgs,
-        args.skip_txt,
-        args.json_path,
-    )
     with trange(start_page, end_page, colour="blue") as t_range:
         for page in t_range:
             logging.basicConfig(level=logging.INFO)
@@ -206,19 +207,13 @@ def fetch_books(start_page, end_page, category_url, args):
                         book_author,
                     ) = parse_book_page(book_id, response_book_page)
                     if skip_txt is False:
-                        if dest_folder:
-                            download_txt(book_id, book_name, folder=dest_folder)
-                        else:
-                            download_txt(book_id, book_name)
+                        download_txt(book_id, book_name, dest_folder)
 
                     img_url = urljoin(book_url, img_src)
                     img_name, _ = get_filename_and_ext(img_url)
 
                     if skip_imgs is False:
-                        if dest_folder:
-                            download_image(img_url, img_name, folder=dest_folder)
-                        else:
-                            download_image(img_url, img_name)
+                        download_image(img_url, img_name, dest_folder)
 
                     normal_img_filename = sanitize_filename(img_name)
                     normal_book_filename = sanitize_filename(img_name)
@@ -240,10 +235,7 @@ def fetch_books(start_page, end_page, category_url, args):
                 print("Битая ссылка. Перехожу к следующей. ", error, file=sys.stderr)
                 logging.debug(error)
                 continue
-    if json_path:
-        fetch_books_info(books_info, start_page, end_page, folder=json_path)
-    else:
-        fetch_books_info(books_info, start_page, end_page)
+    fetch_books_info(books_info, start_page, end_page, dest_folder, folder=json_path)
 
 
 def main():
@@ -252,14 +244,17 @@ def main():
     category_url = env.str("TUTULU_CATEGOTY_URL", "https://tululu.org/l55/")
     response = SESSION.get(category_url)
     response.raise_for_status()
-    max_page, select_page = parse_max_page(response)
-    args = get_command_line_arguments()
-    start_page, end_page = args.start_page, args.end_page
-    if not start_page:
-        start_page = select_page
-    if not end_page:
-        end_page = max_page
-    fetch_books(start_page, end_page, category_url, args)
+    max_page, start_page_from_parse = parse_max_page(response)
+    args = get_command_line_arguments(max_page, start_page_from_parse)
+    start_page, end_page, dest_folder, skip_imgs, skip_txt, json_path = (
+        args.start_page,
+        args.end_page,
+        args.dest_folder,
+        args.skip_imgs,
+        args.skip_txt,
+        args.json_path,
+    )
+    fetch_books(start_page, end_page, category_url, dest_folder, skip_imgs, skip_txt, json_path)
 
 
 if __name__ == "__main__":
