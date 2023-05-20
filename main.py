@@ -16,7 +16,7 @@ from requests import HTTPError
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin, urlsplit, unquote
 
-from parse_tululu_by_category import parse_url_book_by_category, parse_max_page
+from parse_tululu_by_category import parse_urls_book_by_category, parse_max_page
 
 SESSION = requests.Session()
 
@@ -188,7 +188,7 @@ def get_book_urls(page_url):
     response = SESSION.get(page_url)
     response.raise_for_status()
     check_for_redirect(response)
-    book_urls = parse_url_book_by_category(response)
+    book_urls = parse_urls_book_by_category(response)
     return book_urls
 
 
