@@ -150,7 +150,7 @@ class BookRedirectFormatError(HTTPError):
     pass
 
 
-def parse_book_page(book_id, response):
+def parse_book_page(book_id, response, dest_folder):
     soup = BeautifulSoup(response.text, "lxml")
     title_tag = soup.select_one("#content > h1").text
     book_comments = soup.select(".texts .black")
@@ -161,11 +161,25 @@ def parse_book_page(book_id, response):
     book_name = f"{book_id}.{book_title}.txt"
     genres_text = [x.text for x in genres_tag]
     comments_text = [com.text for com in book_comments]
-    return book_name, img_src, comments_text, genres_text, book_title, book_author
+
+    img_name, _ = get_filename_and_ext(img_src)
+    normal_img_filename = sanitize_filename(img_name)
+    img_path = os.path.join(dest_folder, 'images', normal_img_filename).replace('\\', '/')
+    normal_book_filename = sanitize_filename(book_name)
+    book_path = os.path.join(dest_folder, 'books', normal_book_filename).replace('\\', '/')
+    book_description = {
+        "title": book_title,
+        "author": book_author,
+        "img_src": img_path,
+        "book_path": book_path,
+        "comments": comments_text,
+        "genres": genres_text,
+    }
+    return book_name, img_src, img_name, book_description
 
 
 def download_json_content(
-    json_content, start_page, end_page, dest_folder, folder="books_INFO"
+        json_content, start_page, end_page, dest_folder, folder="books_INFO"
 ):
     dest_path = os.path.join(dest_folder, folder)
     book_path = Path(dest_path)
@@ -201,7 +215,7 @@ def get_response_book_page(url):
 
 
 def fetch_books(
-    start_page, end_page, category_url, dest_folder, skip_imgs, skip_txt, json_path
+        start_page, end_page, category_url, dest_folder, skip_imgs, skip_txt, json_path
 ):
     json_content = []
     with trange(start_page, end_page, colour="blue") as t_range:
@@ -218,34 +232,17 @@ def fetch_books(
                     (
                         book_name,
                         img_src,
-                        comments_text,
-                        genres_text,
-                        book_title,
-                        book_author,
-                    ) = parse_book_page(book_id, response_book_page)
+                        img_name,
+                        book_description,
+                    ) = parse_book_page(book_id, response_book_page, dest_folder)
                     if not skip_txt:
                         download_txt(book_id, book_name, dest_folder)
 
                     img_url = urljoin(book_url, img_src)
-                    img_name, _ = get_filename_and_ext(img_url)
-
                     if not skip_imgs:
                         download_image(img_url, img_name, dest_folder)
 
-                    normal_img_filename = sanitize_filename(img_name)
-                    img_path = os.path.join(dest_folder, 'images', normal_img_filename).replace('\\', '/')
-                    normal_book_filename = sanitize_filename(book_name)
-                    book_path = os.path.join(dest_folder, 'books', normal_book_filename).replace('\\', '/')
-                    json_content.append(
-                        {
-                            "title": book_title,
-                            "author": book_author,
-                            "img_src": img_path,
-                            "book_path": book_path,
-                            "comments": comments_text,
-                            "genres": genres_text,
-                        }
-                    )
+                    json_content.append(book_description)
             except BookRedirectFormatError as error:
                 print(error, file=sys.stderr)
                 logger.error(error)
@@ -258,7 +255,6 @@ def fetch_books(
 
 
 def main():
-    global max_page, start_page_from_parse
     logging.basicConfig(level=logging.ERROR)
     logger.setLevel(logging.DEBUG)
     env = Env()
