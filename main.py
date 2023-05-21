@@ -167,7 +167,7 @@ def parse_book_page(book_id, response, dest_folder):
     img_path = os.path.join(dest_folder, 'images', normal_img_filename).replace('\\', '/')
     normal_book_filename = sanitize_filename(book_name)
     book_path = os.path.join(dest_folder, 'books', normal_book_filename).replace('\\', '/')
-    book_description = {
+    books_json_content = {
         "title": book_title,
         "author": book_author,
         "img_src": img_path,
@@ -175,11 +175,11 @@ def parse_book_page(book_id, response, dest_folder):
         "comments": comments_text,
         "genres": genres_text,
     }
-    return book_name, img_src, img_name, book_description
+    return book_name, img_src, img_name, books_json_content
 
 
-def download_json_content(
-        json_content, start_page, end_page, dest_folder, folder="books_INFO"
+def save_books_json_content(
+        books_json_content, start_page, end_page, dest_folder, folder="books_INFO"
 ):
     dest_path = os.path.join(dest_folder, folder)
     book_path = Path(dest_path)
@@ -187,7 +187,7 @@ def download_json_content(
     file_name = sanitize_filename(f"books_INFO_page_{start_page}_{end_page}.json")
     file_path = os.path.join(book_path, file_name)
     with open(f"{file_path}", "w", encoding="utf-8") as file:
-        json.dump(json_content, file, ensure_ascii=False, indent=4)
+        json.dump(books_json_content, file, ensure_ascii=False, indent=4)
 
 
 def get_book_id(book_url):
@@ -217,7 +217,7 @@ def get_response_book_page(url):
 def fetch_books(
         start_page, end_page, category_url, dest_folder, skip_imgs, skip_txt, json_path
 ):
-    json_content = []
+    books = []
     with trange(start_page, end_page, colour="blue") as t_range:
         for page in t_range:
             logger.info(f"Загружаем со страницы №{page}")
@@ -233,7 +233,7 @@ def fetch_books(
                             book_name,
                             img_src,
                             img_name,
-                            book_description,
+                            books_json_content,
                         ) = parse_book_page(book_id, response_book_page, dest_folder)
                         if not skip_txt:
                             download_txt(book_id, book_name, dest_folder)
@@ -241,7 +241,7 @@ def fetch_books(
                         img_url = urljoin(book_url, img_src)
                         if not skip_imgs:
                             download_image(img_url, img_name, dest_folder)
-                        json_content.append(book_description)
+                        books.append(books_json_content)
                 except BookRedirectFormatError as error:
                     print(error, file=sys.stderr)
                     logger.error(error)
@@ -258,7 +258,7 @@ def fetch_books(
                 print("Битая ссылка. Перехожу к следующей. ", error, file=sys.stderr)
                 logger.error(error)
                 continue
-    download_json_content(json_content, start_page, end_page, dest_folder, folder=json_path)
+    save_books_json_content(books, start_page, end_page, dest_folder, folder=json_path)
 
 
 def main():
