@@ -208,12 +208,12 @@ def fetch_books(
         for page in t_range:
             logger.info(f"Загружаем со страницы №{page}")
             try:
-                page_url = f"{category_url}{page}ggg"
+                page_url = f"{category_url}{page}"
                 book_urls = get_book_urls(page_url)
 
                 for book_url in book_urls:
                     book_id = get_book_id(book_url)
-                    url = f"https://tululu.org/b{book_id}/ggg"
+                    url = f"https://tululu.org/b{book_id}/"
                     response_book_page = get_response_book_page(url)
                     (
                         book_name,
@@ -258,6 +258,7 @@ def fetch_books(
 
 
 def main():
+    global max_page, start_page_from_parse
     logging.basicConfig(level=logging.ERROR)
     logger.setLevel(logging.DEBUG)
     env = Env()
@@ -267,21 +268,21 @@ def main():
         response = SESSION.get(category_url)
         response.raise_for_status()
         max_page, start_page_from_parse = parse_max_page(response)
-        args = get_command_line_arguments(max_page, start_page_from_parse)
-        start_page, end_page, dest_folder, skip_imgs, skip_txt, json_path = (
-            args.start_page,
-            args.end_page,
-            args.dest_folder,
-            args.skip_imgs,
-            args.skip_txt,
-            args.json_path,
-        )
-        fetch_books(
-            start_page, end_page, category_url, dest_folder, skip_imgs, skip_txt, json_path
-        )
     except HTTPError as error:
         print("Битая или не верная ссылка. Проверьте правильность ввода ", error, file=sys.stderr)
         logger.error(error)
+    args = get_command_line_arguments(max_page, start_page_from_parse)
+    start_page, end_page, dest_folder, skip_imgs, skip_txt, json_path = (
+        args.start_page,
+        args.end_page,
+        args.dest_folder,
+        args.skip_imgs,
+        args.skip_txt,
+        args.json_path,
+    )
+    fetch_books(
+        start_page, end_page, category_url, dest_folder, skip_imgs, skip_txt, json_path
+    )
 
 
 if __name__ == "__main__":
