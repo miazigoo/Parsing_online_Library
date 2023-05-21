@@ -223,13 +223,13 @@ def fetch_books(
                         book_title,
                         book_author,
                     ) = parse_book_page(book_id, response_book_page)
-                    if skip_txt is False:
+                    if not skip_txt:
                         download_txt(book_id, book_name, dest_folder)
 
                     img_url = urljoin(book_url, img_src)
                     img_name, _ = get_filename_and_ext(img_url)
 
-                    if skip_imgs is False:
+                    if not skip_imgs:
                         download_image(img_url, img_name, dest_folder)
 
                     normal_img_filename = sanitize_filename(img_name)
