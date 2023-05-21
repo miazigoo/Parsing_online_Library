@@ -224,25 +224,32 @@ def fetch_books(
             try:
                 page_url = f"{category_url}{page}"
                 book_urls = get_book_urls(page_url)
+                try:
+                    for book_url in book_urls:
+                        book_id = get_book_id(book_url)
+                        url = f"https://tululu.org/b{book_id}/"
+                        response_book_page = get_response_book_page(url)
+                        (
+                            book_name,
+                            img_src,
+                            img_name,
+                            book_description,
+                        ) = parse_book_page(book_id, response_book_page, dest_folder)
+                        if not skip_txt:
+                            download_txt(book_id, book_name, dest_folder)
 
-                for book_url in book_urls:
-                    book_id = get_book_id(book_url)
-                    url = f"https://tululu.org/b{book_id}/"
-                    response_book_page = get_response_book_page(url)
-                    (
-                        book_name,
-                        img_src,
-                        img_name,
-                        book_description,
-                    ) = parse_book_page(book_id, response_book_page, dest_folder)
-                    if not skip_txt:
-                        download_txt(book_id, book_name, dest_folder)
-
-                    img_url = urljoin(book_url, img_src)
-                    if not skip_imgs:
-                        download_image(img_url, img_name, dest_folder)
-
-                    json_content.append(book_description)
+                        img_url = urljoin(book_url, img_src)
+                        if not skip_imgs:
+                            download_image(img_url, img_name, dest_folder)
+                        json_content.append(book_description)
+                except BookRedirectFormatError as error:
+                    print(error, file=sys.stderr)
+                    logger.error(error)
+                    continue
+                except HTTPError as error:
+                    print("Битая ссылка. Перехожу к следующей. ", error, file=sys.stderr)
+                    logger.error(error)
+                    continue
             except BookRedirectFormatError as error:
                 print(error, file=sys.stderr)
                 logger.error(error)
