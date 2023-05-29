@@ -167,19 +167,22 @@ def parse_book_page(book_id, response, dest_folder):
     img_path = os.path.join(dest_folder, 'images', normal_img_filename).replace('\\', '/')
     normal_book_filename = sanitize_filename(book_name)
     book_path = os.path.join(dest_folder, 'books', normal_book_filename).replace('\\', '/')
-    books_json_content = {
+    book = {
         "title": book_title,
         "author": book_author,
         "img_src": img_path,
         "book_path": book_path,
         "comments": comments_text,
         "genres": genres_text,
+        "book_name": book_name,
+        "img_src": img_src,
+        "img_name": img_name,
     }
-    return book_name, img_src, img_name, books_json_content
+    return book
 
 
 def save_books_json_content(
-        books_json_content, start_page, end_page, dest_folder, folder="books_INFO"
+        book, start_page, end_page, dest_folder, folder="books_INFO"
 ):
     dest_path = os.path.join(dest_folder, folder)
     book_path = Path(dest_path)
@@ -187,7 +190,7 @@ def save_books_json_content(
     file_name = sanitize_filename(f"books_INFO_page_{start_page}_{end_page}.json")
     file_path = os.path.join(book_path, file_name)
     with open(f"{file_path}", "w", encoding="utf-8") as file:
-        json.dump(books_json_content, file, ensure_ascii=False, indent=4)
+        json.dump(book, file, ensure_ascii=False, indent=4)
 
 
 def get_book_id(book_url):
@@ -229,19 +232,14 @@ def fetch_books(
                         book_id = get_book_id(book_url)
                         url = f"https://tululu.org/b{book_id}/"
                         response_book_page = get_response_book_page(url)
-                        (
-                            book_name,
-                            img_src,
-                            img_name,
-                            books_json_content,
-                        ) = parse_book_page(book_id, response_book_page, dest_folder)
+                        book = parse_book_page(book_id, response_book_page, dest_folder)
                         if not skip_txt:
-                            download_txt(book_id, book_name, dest_folder)
+                            download_txt(book_id, book['book_name'], dest_folder)
 
-                        img_url = urljoin(book_url, img_src)
+                        img_url = urljoin(book_url, book['img_src'])
                         if not skip_imgs:
-                            download_image(img_url, img_name, dest_folder)
-                        books.append(books_json_content)
+                            download_image(img_url, book['img_name'], dest_folder)
+                        books.append(book)
                 except BookRedirectFormatError as error:
                     print(error, file=sys.stderr)
                     logger.error(error)
