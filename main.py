@@ -170,7 +170,7 @@ def parse_book_page(book_id, response, dest_folder):
     book = {
         "title": book_title,
         "author": book_author,
-        "img_src": img_path,
+        "img_path": img_path,
         "book_path": book_path,
         "comments": comments_text,
         "genres": genres_text,
