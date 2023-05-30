@@ -140,10 +140,10 @@ cython_debug/
 /media
 /static/.gitkeep
 .idea/
-/books/
-/images/
-/comments/
-/Parse/
-/books_INFO/
+#/books/
+#/images/
+#/comments/
+#/Parse/
+#/books_INFO/
 test.py
 bs4_tutorial.py
