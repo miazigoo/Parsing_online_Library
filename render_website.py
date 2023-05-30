@@ -1,6 +1,6 @@
 import json
 import logging
-
+from more_itertools import chunked
 from livereload import Server, shell
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
@@ -16,6 +16,7 @@ with open("Parse/books_INFO/books_INFO_page_1_10.json", "r", encoding="utf-8") a
 
 books = json.loads(books_json)
 
+
 env = Environment(
     loader=FileSystemLoader('.'),
     autoescape=select_autoescape(['html'])
@@ -24,8 +25,10 @@ env = Environment(
 
 def on_reload():
     template = env.get_template('base.html')
+    books_chunked = list(chunked(books, 2))
+    print(books_chunked)
     rendered_page = template.render(
-        books=books
+        books_chunked=books_chunked
     )
 
     with open('index.html', 'w', encoding="utf8") as file:
