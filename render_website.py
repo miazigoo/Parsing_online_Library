@@ -26,7 +26,6 @@ env = Environment(
 def on_reload():
     template = env.get_template('base.html')
     books_chunked = list(chunked(books, 2))
-    print(books_chunked)
     rendered_page = template.render(
         books_chunked=books_chunked
     )
