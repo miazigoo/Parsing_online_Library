@@ -28,7 +28,7 @@ def on_reload():
     count = math.ceil(len(books) / 10)
     print('count=', count)
     os.makedirs('pages', exist_ok=True)
-    template = env.get_template('base.html')
+    template = env.get_template('template/base.html')
     books_chunked_pages = list(chunked(books, 10))
     for page, books_10 in enumerate(books_chunked_pages, 1):
         books_chunked = list(chunked(books_10, 2))
