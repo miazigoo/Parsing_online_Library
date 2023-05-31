@@ -36,6 +36,9 @@ python main.py --start_page 20 --end_page 30 --skip_txt --json_path my_json
 ```
 Без указания аргументов дефолтные значения `--start_page` и `--end_page` равны 1 и 10.
 
+### Запуск сайта
+https://github.com/miazigoo/Parsing_online_Library/blob/main/docs/pages/index_1.html
+
 ### Цель проекта
 
 Код написан в образовательных целях на онлайн-курсе для веб-разработчиков [dvmn.org](https://dvmn.org/).
