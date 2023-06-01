@@ -5,7 +5,7 @@
 
 ### Как установить
 
-* Скачать [этот script](https://github.com/miazigoo/Parsing_online_Library)
+* Скачать [этот script](https://github.com/miazigoo/Parsing_online_Library/tree/main/pages)
 
 **Python3 уже должен быть установлен**. 
 Используйте `pip` (или `pip3`, если возникает конфликт с Python2) для установки зависимостей:
