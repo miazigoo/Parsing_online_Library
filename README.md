@@ -1,6 +1,7 @@
 # Парсер книг с сайта tululu.org
 
 Программа скачивает книги, обложки книг и информацию в `*.json` файл [с этого сайта](https://tululu.org/txt.php).
+Из `*.json` файла можно сверстать `html` страницы и запустить сайт скриптом `render_website.py`
 
 
 ### Как установить
@@ -36,8 +37,17 @@ python main.py --start_page 20 --end_page 30 --skip_txt --json_path my_json
 ```
 Без указания аргументов дефолтные значения `--start_page` и `--end_page` равны 1 и 10.
 
-### Запуск сайта
-https://miazigoo.github.io/Parsing_online_Library/pages/index_1.html
+### Как пользоваться `render_website.py`:
+После запуска скрипта  `main.py`, у вас будет `*.json` файл
+Необходимо открыть в редакторе `render_website.py` и заменить в 16 строке `books_INFO_page_1_10.json` на свое название `*.json` файла.
+Запустить `render_website.py` командой:
+```sh
+python render_website.py
+```
+Сайт будет доступен по адресу `http://127.0.0.1:5500`
+
+### Посмотреть пример сайта на:
+https://miazigoo.github.io/pages/index_1.html
 
 ### Цель проекта
 
