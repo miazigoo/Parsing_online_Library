@@ -49,6 +49,10 @@ python render_website.py
 ```
 Сайт будет доступен по адресу `http://127.0.0.1:5500`
 
+### Скачать сайт отдельно:
+Перейти по [ссылке](https://github.com/miazigoo/miazigoo.github.io).
+Прочитать `README.md`
+
 
 ### Цель проекта
 
