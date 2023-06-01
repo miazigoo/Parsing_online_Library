@@ -3,6 +3,9 @@
 Программа скачивает книги, обложки книг и информацию в `*.json` файл [с этого сайта](https://tululu.org/txt.php).
 Из `*.json` файла можно сверстать `html` страницы и запустить сайт скриптом `render_website.py`
 
+### Посмотреть пример сайта на:
+https://miazigoo.github.io/pages/index_1.html
+
 
 ### Как установить
 
@@ -46,8 +49,6 @@ python render_website.py
 ```
 Сайт будет доступен по адресу `http://127.0.0.1:5500`
 
-### Посмотреть пример сайта на:
-https://miazigoo.github.io/pages/index_1.html
 
 ### Цель проекта
 
