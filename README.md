@@ -1,15 +1,30 @@
-# Парсер книг с сайта tululu.org
+# Онлайн библиотека и парсер книг с сайта tululu.org
 
 Программа скачивает книги, обложки книг и информацию в `*.json` файл [с этого сайта](https://tululu.org/txt.php).
 Из `*.json` файла можно сверстать `html` страницы и запустить сайт скриптом `render_website.py`
 
 ### Посмотреть пример сайта на:
 https://miazigoo.github.io/pages/index_1.html
+![screen](https://github.com/miazigoo/Parsing_online_Library/assets/55626306/7de72bcd-ac0b-464f-bf08-5ec7b937f584)
+
+
+### Как пользоваться `render_website.py`:
+В корне дирректории лежит файл `books_page.json` - там информация по спарсеным книгам.
+Запустить `render_website.py` командой:
+```sh
+python render_website.py
+```
+Сайт будет доступен по адресу `http://127.0.0.1:5500`
+
+### Скачать html сайт отдельно:
+Перейти по [ссылке](https://github.com/miazigoo/miazigoo.github.io).
+Прочитать `README.md`
+
 
 
 ### Как установить
 
-* Скачать [этот script](https://github.com/miazigoo/Parsing_online_Library/tree/main/pages)
+* Скачать [этот script](https://github.com/miazigoo/Parsing_online_Library/)
 
 **Python3 уже должен быть установлен**. 
 Используйте `pip` (или `pip3`, если возникает конфликт с Python2) для установки зависимостей:
@@ -17,13 +32,13 @@ https://miazigoo.github.io/pages/index_1.html
 pip install -r requirements.txt
 ```
 
-### Ссылка на категорию книг
+### Ссылка на категорию книг (Парсер)
 
 Часть настроек проекта берётся из переменных окружения. Чтобы их определить, создайте файл `.env` рядом с `main.py` и запишите туда данные в таком формате: `ПЕРЕМЕННАЯ=значение`.
 Доступна 1 переменная:
 - `TUTULU_CATEGOTY_URL` — Ссылка на категорию книг. На сайте выберите нужную вам категорию, скопируйте ссылку, вставте в `.env` например: `TUTULU_CATEGOTY_URL=https://tululu.org/l93/`. По дефолту будут скачиваться книги с категории "Научная фантастика"
 
-### Аргументы
+### Аргументы (Парсер)
 
 При запуске программы используйте аргументы 
 ```commandline
@@ -39,19 +54,6 @@ pip install -r requirements.txt
 python main.py --start_page 20 --end_page 30 --skip_txt --json_path my_json
 ```
 Без указания аргументов дефолтные значения `--start_page` и `--end_page` равны 1 и 10.
-
-### Как пользоваться `render_website.py`:
-После запуска скрипта  `main.py`, у вас будет `*.json` файл
-Необходимо открыть в редакторе `render_website.py` и заменить в 16 строке `books_INFO_page_1_10.json` на свое название `*.json` файла.
-Запустить `render_website.py` командой:
-```sh
-python render_website.py
-```
-Сайт будет доступен по адресу `http://127.0.0.1:5500`
-
-### Скачать сайт отдельно:
-Перейти по [ссылке](https://github.com/miazigoo/miazigoo.github.io).
-Прочитать `README.md`
 
 
 ### Цель проекта
