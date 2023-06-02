@@ -4,7 +4,7 @@
 Из `*.json` файла можно сверстать `html` страницы и запустить сайт скриптом `render_website.py`
 
 ### Посмотреть пример сайта на:
-https://miazigoo.github.io/pages/index_1.html
+https://miazigoo.github.io/Parsing_online_Library/pages/index_1.html
 ![screen](https://github.com/miazigoo/Parsing_online_Library/assets/55626306/7de72bcd-ac0b-464f-bf08-5ec7b937f584)
 
 
