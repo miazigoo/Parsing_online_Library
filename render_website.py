@@ -13,7 +13,7 @@ logging.basicConfig(
     format="%(levelname)s - %(message)s",
 )
 
-with open("Parse/books_INFO/books_INFO_page_1_10.json", "r", encoding="utf-8") as my_file:
+with open("books_page.json", "r", encoding="utf-8") as my_file:
     books_json = my_file.read()
 
 books = json.loads(books_json)
@@ -26,7 +26,6 @@ env = Environment(
 
 def on_reload():
     count = math.ceil(len(books) / 10)
-    print('count=', count)
     os.makedirs('pages', exist_ok=True)
     template = env.get_template('template/base.html')
     books_chunked_pages = list(chunked(books, 10))
