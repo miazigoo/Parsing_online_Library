@@ -18,21 +18,21 @@ environs = Env()
 environs.read_env()
 file_path = environs.str("BOOKS_PAGES", "books_page.json")
 
-with open(F"{file_path}", "r", encoding="utf-8") as my_file:
+with open(f"{file_path}", "r", encoding="utf-8") as my_file:
     books = json.load(my_file)
 
 
 env = Environment(
-    loader=FileSystemLoader('.'),
-    autoescape=select_autoescape(['html'])
+    loader=FileSystemLoader("."),
+    autoescape=select_autoescape(["html"])
 )
 
 
 def on_reload():
     books_on_page = 10
     count_pages = math.ceil(len(books) / books_on_page)
-    os.makedirs('pages', exist_ok=True)
-    template = env.get_template('template/base.html')
+    os.makedirs("pages", exist_ok=True)
+    template = env.get_template("template/base.html")
     books_chunked_pages = list(chunked(books, books_on_page))
     for page, books_10 in enumerate(books_chunked_pages, 1):
         books_in_column = 2
@@ -43,12 +43,12 @@ def on_reload():
             page_num=page
         )
 
-        with open(f'pages/index_{page}.html', 'w', encoding="utf8") as file:
+        with open(f"pages/index_{page}.html", "w", encoding="utf8") as file:
             file.write(rendered_page)
         logger.error("Работает (~_~)=/")
 
 
 server = Server()
-server.watch('pages/*.rst', shell('make html', cwd='pages'), on_reload())
+server.watch("pages/*.rst", shell("make html", cwd="pages"), on_reload())
 server.watch("template/base.html", on_reload)
-server.serve(open_url_delay=5, debug=False, default_filename='pages/index_1.html')
+server.serve(open_url_delay=5, debug=False, default_filename="pages/index_1.html")
