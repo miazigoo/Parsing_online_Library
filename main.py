@@ -69,7 +69,7 @@ def get_command_line_arguments(max_page, start_page_from_parse):
         "--dest_folder",
         nargs="?",
         help="путь к каталогу с результатами парсинга: ",
-        default="Parse",
+        default="Media",
     )
     parser.add_argument(
         "--skip_imgs", help="не скачивать картинки.", action="store_true"
@@ -79,7 +79,7 @@ def get_command_line_arguments(max_page, start_page_from_parse):
         "--json_path",
         nargs="?",
         help="указать свой путь к *.json файлу с результатами: ",
-        default="books_INFO",
+        default=".",
     )
     args = parser.parse_args()
 
@@ -182,12 +182,12 @@ def parse_book_page(book_id, response, dest_folder):
 
 
 def save_books_json_content(
-        book, start_page, end_page, dest_folder, folder="books_INFO"
+        book, start_page, end_page, folder
 ):
-    dest_path = os.path.join(dest_folder, folder)
+    dest_path = os.path.join(folder)
     book_path = Path(dest_path)
     book_path.mkdir(parents=True, exist_ok=True)
-    file_name = sanitize_filename(f"books_INFO_page_{start_page}_{end_page}.json")
+    file_name = sanitize_filename("books_page.json")
     file_path = os.path.join(book_path, file_name)
     with open(f"{file_path}", "w", encoding="utf-8") as file:
         json.dump(book, file, ensure_ascii=False, indent=4)
@@ -256,7 +256,7 @@ def fetch_books(
                 print("Битая ссылка. Перехожу к следующей. ", error, file=sys.stderr)
                 logger.error(error)
                 continue
-    save_books_json_content(books, start_page, end_page, dest_folder, folder=json_path)
+    save_books_json_content(books, start_page, end_page, folder=json_path)
 
 
 def main():

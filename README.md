@@ -4,8 +4,22 @@
 Из `*.json` файла можно сверстать `html` страницы и запустить сайт скриптом `render_website.py`
 
 ### Посмотреть пример сайта на:
-https://miazigoo.github.io/pages/index_1.html
+https://miazigoo.github.io/Parsing_online_Library/pages/index_1.html
+![screen](https://github.com/miazigoo/Parsing_online_Library/assets/55626306/7de72bcd-ac0b-464f-bf08-5ec7b937f584)
 
+
+### Как пользоваться `render_website.py`:
+В корне дирректории лежит файл `books_page.json` - там информация по спарсеным книгам.
+Запустить `render_website.py` командой:
+```sh
+python render_website.py
+```
+Сайт будет доступен по [адресу `http://127.0.0.1:5500`](http://127.0.0.1:5500)
+
+
+### Скачать html сайт отдельно:
+Перейти по [ссылке](https://github.com/miazigoo/miazigoo.github.io).
+Прочитать `README.md`
 
 ### Как установить
 
@@ -39,19 +53,6 @@ pip install -r requirements.txt
 python main.py --start_page 20 --end_page 30 --skip_txt --json_path my_json
 ```
 Без указания аргументов дефолтные значения `--start_page` и `--end_page` равны 1 и 10.
-
-### Как пользоваться `render_website.py`:
-После запуска скрипта  `main.py`, у вас будет `*.json` файл
-Необходимо открыть в редакторе `render_website.py` и заменить в 16 строке `books_INFO_page_1_10.json` на свое название `*.json` файла.
-Запустить `render_website.py` командой:
-```sh
-python render_website.py
-```
-Сайт будет доступен по адресу `http://127.0.0.1:5500`
-
-### Скачать сайт отдельно:
-Перейти по [ссылке](https://github.com/miazigoo/miazigoo.github.io).
-Прочитать `README.md`
 
 
 ### Цель проекта

@@ -137,13 +137,9 @@ dmypy.json
 
 # Cython debug symbols
 cython_debug/
-/media
+#/media
 /static/.gitkeep
 .idea/
-#/books/
-#/images/
-#/comments/
-#/Parse/
-#/books_INFO/
+
 test.py
 bs4_tutorial.py

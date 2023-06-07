@@ -44,5 +44,5 @@ def on_reload():
 
 server = Server()
 server.watch('pages/*.rst', shell('make html', cwd='pages'), on_reload())
-server.watch("base.html", on_reload)
+server.watch("template/base.html", on_reload)
 server.serve(open_url_delay=5, debug=False, default_filename='pages/index_1.html')
