@@ -19,9 +19,8 @@ environs.read_env()
 file_path = environs.str("BOOKS_PAGES", "books_page.json")
 
 with open(F"{file_path}", "r", encoding="utf-8") as my_file:
-    books_json = my_file.read()
+    books = json.load(my_file)
 
-books = json.loads(books_json)
 
 env = Environment(
     loader=FileSystemLoader('.'),
