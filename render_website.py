@@ -29,7 +29,7 @@ env = Environment(
 
 
 def on_reload():
-    count = math.ceil(len(books) / 10)
+    count_pages = math.ceil(len(books) / 10)
     os.makedirs('pages', exist_ok=True)
     template = env.get_template('template/base.html')
     books_chunked_pages = list(chunked(books, 10))
@@ -37,7 +37,7 @@ def on_reload():
         books_chunked = list(chunked(books_10, 2))
         rendered_page = template.render(
             books_chunked=books_chunked,
-            count=count,
+            count=count_pages,
             page_num=page
         )
 
