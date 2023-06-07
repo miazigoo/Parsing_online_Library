@@ -3,6 +3,7 @@ import logging
 import math
 import os
 
+from environs import Env
 from more_itertools import chunked
 from livereload import Server, shell
 from jinja2 import Environment, FileSystemLoader, select_autoescape
@@ -13,7 +14,11 @@ logging.basicConfig(
     format="%(levelname)s - %(message)s",
 )
 
-with open("books_page.json", "r", encoding="utf-8") as my_file:
+environs = Env()
+environs.read_env()
+file_path = environs.str("BOOKS_PAGES", "books_page.json")
+
+with open(F"{file_path}", "r", encoding="utf-8") as my_file:
     books_json = my_file.read()
 
 books = json.loads(books_json)
