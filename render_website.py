@@ -34,9 +34,9 @@ def on_reload():
     template = env.get_template('template/base.html')
     books_chunked_pages = list(chunked(books, 10))
     for page, books_10 in enumerate(books_chunked_pages, 1):
-        books_chunked = list(chunked(books_10, 2))
+        chunked_books = list(chunked(books_10, 2))
         rendered_page = template.render(
-            books_chunked=books_chunked,
+            chunked_books=chunked_books,
             count=count_pages,
             page_num=page
         )
