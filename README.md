@@ -17,13 +17,18 @@ python render_website.py
 Сайт будет доступен по [адресу `http://127.0.0.1:5500`](http://127.0.0.1:5500)
 
 
+### Как пользоваться оффлайн:
+Скачать [этот script](https://github.com/miazigoo/Parsing_online_Library.git). 
+Перейти в директорию `pages` и открыть любой `html` файл.
+
+
 ### Скачать html сайт отдельно:
 Перейти по [ссылке](https://github.com/miazigoo/miazigoo.github.io).
 Прочитать `README.md`
 
 ### Как установить
 
-* Скачать [этот script](https://github.com/miazigoo/Parsing_online_Library/tree/main/pages)
+* Скачать [этот script](https://github.com/miazigoo/Parsing_online_Library.git)
 
 **Python3 уже должен быть установлен**. 
 Используйте `pip` (или `pip3`, если возникает конфликт с Python2) для установки зависимостей:
