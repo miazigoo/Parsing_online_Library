@@ -29,12 +29,14 @@ env = Environment(
 
 
 def on_reload():
-    count_pages = math.ceil(len(books) / 10)
+    books_on_page = 10
+    count_pages = math.ceil(len(books) / books_on_page)
     os.makedirs('pages', exist_ok=True)
     template = env.get_template('template/base.html')
-    books_chunked_pages = list(chunked(books, 10))
+    books_chunked_pages = list(chunked(books, books_on_page))
     for page, books_10 in enumerate(books_chunked_pages, 1):
-        chunked_books = list(chunked(books_10, 2))
+        books_in_column = 2
+        chunked_books = list(chunked(books_10, books_in_column))
         rendered_page = template.render(
             chunked_books=chunked_books,
             count=count_pages,
