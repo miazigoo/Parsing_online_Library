@@ -69,7 +69,7 @@ def get_command_line_arguments(max_page, start_page_from_parse):
         "--dest_folder",
         nargs="?",
         help="путь к каталогу с результатами парсинга: ",
-        default="Media",
+        default="media",
     )
     parser.add_argument(
         "--skip_imgs", help="не скачивать картинки.", action="store_true"
