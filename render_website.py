@@ -17,14 +17,15 @@ logging.basicConfig(
 
 environs = Env()
 environs.read_env()
+
 books_page_path = environs.str("BOOKS_PAGES", "books_page.json")
-env = Environment(
-    loader=FileSystemLoader("."),
-    autoescape=select_autoescape(["html"])
-)
 
 
 def on_reload():
+    env = Environment(
+        loader=FileSystemLoader("."),
+        autoescape=select_autoescape(["html"])
+    )
     with open(books_page_path, "r", encoding="utf-8") as my_file:
         books = json.load(my_file)
     books_on_page = 10
@@ -46,6 +47,7 @@ def on_reload():
 
 
 def main():
+    logger.info('Скрипт запущен')
     server = Server()
     server.watch("pages/*.rst", shell("make html", cwd="pages"), on_reload())
     server.watch("template/base.html", on_reload)
