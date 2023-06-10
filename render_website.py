@@ -15,13 +15,11 @@ logging.basicConfig(
     format="%(levelname)s - %(message)s",
 )
 
-environs = Env()
-environs.read_env()
-
-books_page_path = environs.str("BOOKS_PAGES", "books_page.json")
-
 
 def on_reload():
+    environs = Env()
+    environs.read_env()
+    books_page_path = environs.str("BOOKS_PAGES", "books_page.json")
     env = Environment(
         loader=FileSystemLoader("."),
         autoescape=select_autoescape(["html"])
