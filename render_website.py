@@ -7,6 +7,7 @@ import os
 from more_itertools import chunked
 from livereload import Server, shell
 from jinja2 import Environment, FileSystemLoader, select_autoescape
+from functools import partial
 
 logger = logging.getLogger(__name__)
 
@@ -34,14 +35,12 @@ def get_command_line_argument():
     return page_path
 
 
-BOOK_PAGE_PATH = get_command_line_argument()
-
-
 def on_reload():
+    page_path = get_command_line_argument()
     env = Environment(
         loader=FileSystemLoader("."), autoescape=select_autoescape(["html"])
     )
-    with open(BOOK_PAGE_PATH, "r", encoding="utf-8") as my_file:
+    with open(page_path, "r", encoding="utf-8") as my_file:
         books = json.load(my_file)
     books_on_page = 10
     count_pages = math.ceil(len(books) / books_on_page)
