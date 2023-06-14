@@ -1,9 +1,9 @@
+import argparse
 import json
 import logging
 import math
 import os
 
-from environs import Env
 from more_itertools import chunked
 from livereload import Server, shell
 from jinja2 import Environment, FileSystemLoader, select_autoescape
@@ -15,13 +15,31 @@ logging.basicConfig(
     format="%(levelname)s - %(message)s",
 )
 
-BOOK_PAGE_PATH = "books_page.json"
+
+def get_command_line_argument():
+    """parse arg"""
+    parser = argparse.ArgumentParser(
+        description="""
+        Программа рендерит веб страницы. 
+        """
+    )
+    parser.add_argument(
+        "page_path",
+        nargs="?",
+        help="Укажите путь до исполняемого файла, по дефолту - books_page.json: ",
+        default="books_page.json",
+    )
+    page_path = parser.parse_args().page_path
+
+    return page_path
+
+
+BOOK_PAGE_PATH = get_command_line_argument()
 
 
 def on_reload():
     env = Environment(
-        loader=FileSystemLoader("."),
-        autoescape=select_autoescape(["html"])
+        loader=FileSystemLoader("."), autoescape=select_autoescape(["html"])
     )
     with open(BOOK_PAGE_PATH, "r", encoding="utf-8") as my_file:
         books = json.load(my_file)
@@ -34,9 +52,7 @@ def on_reload():
         books_in_column = 2
         chunked_books = list(chunked(books, books_in_column))
         rendered_page = template.render(
-            chunked_books=chunked_books,
-            count=count_pages,
-            page_num=page
+            chunked_books=chunked_books, count=count_pages, page_num=page
         )
 
         with open(f"pages/index_{page}.html", "w", encoding="utf8") as file:
@@ -44,7 +60,7 @@ def on_reload():
 
 
 def main():
-    logger.info('Скрипт запущен')
+    logger.info("Скрипт запущен")
     server = Server()
     server.watch("pages/*.rst", shell("make html", cwd="pages"), on_reload())
     server.watch("template/base.html", on_reload)

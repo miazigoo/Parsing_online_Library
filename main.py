@@ -164,9 +164,13 @@ def parse_book_page(book_id, response, dest_folder):
 
     img_name, _ = get_filename_and_ext(img_src)
     normal_img_filename = sanitize_filename(img_name)
-    img_path = os.path.join(dest_folder, 'images', normal_img_filename).replace('\\', '/')
+    img_path = os.path.join(dest_folder, "images", normal_img_filename).replace(
+        "\\", "/"
+    )
     normal_book_filename = sanitize_filename(book_name)
-    book_path = os.path.join(dest_folder, 'books', normal_book_filename).replace('\\', '/')
+    book_path = os.path.join(dest_folder, "books", normal_book_filename).replace(
+        "\\", "/"
+    )
     book = {
         "title": book_title,
         "author": book_author,
@@ -181,9 +185,7 @@ def parse_book_page(book_id, response, dest_folder):
     return book
 
 
-def save_books_json_content(
-        book, start_page, end_page, folder
-):
+def save_books_json_content(book, start_page, end_page, folder):
     dest_path = os.path.join(folder)
     book_path = Path(dest_path)
     book_path.mkdir(parents=True, exist_ok=True)
@@ -218,7 +220,7 @@ def get_response_book_page(url):
 
 
 def fetch_books(
-        start_page, end_page, category_url, dest_folder, skip_imgs, skip_txt, json_path
+    start_page, end_page, category_url, dest_folder, skip_imgs, skip_txt, json_path
 ):
     books = []
     with trange(start_page, end_page, colour="blue") as t_range:
@@ -234,18 +236,20 @@ def fetch_books(
                         response_book_page = get_response_book_page(url)
                         book = parse_book_page(book_id, response_book_page, dest_folder)
                         if not skip_txt:
-                            download_txt(book_id, book['book_name'], dest_folder)
+                            download_txt(book_id, book["book_name"], dest_folder)
 
-                        img_url = urljoin(book_url, book['img_src'])
+                        img_url = urljoin(book_url, book["img_src"])
                         if not skip_imgs:
-                            download_image(img_url, book['img_name'], dest_folder)
+                            download_image(img_url, book["img_name"], dest_folder)
                         books.append(book)
                 except BookRedirectFormatError as error:
                     print(error, file=sys.stderr)
                     logger.error(error)
                     continue
                 except HTTPError as error:
-                    print("Битая ссылка. Перехожу к следующей. ", error, file=sys.stderr)
+                    print(
+                        "Битая ссылка. Перехожу к следующей. ", error, file=sys.stderr
+                    )
                     logger.error(error)
                     continue
             except BookRedirectFormatError as error:
@@ -270,7 +274,11 @@ def main():
         response.raise_for_status()
         max_page, start_page_from_parse = parse_max_page(response)
     except HTTPError as error:
-        print("Битая или не верная ссылка. Проверьте правильность ввода ", error, file=sys.stderr)
+        print(
+            "Битая или не верная ссылка. Проверьте правильность ввода ",
+            error,
+            file=sys.stderr,
+        )
         logger.error(error)
     args = get_command_line_arguments(max_page, start_page_from_parse)
     start_page, end_page, dest_folder, skip_imgs, skip_txt, json_path = (
