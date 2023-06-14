@@ -15,9 +15,7 @@ logging.basicConfig(
     format="%(levelname)s - %(message)s",
 )
 
-environs = Env()
-environs.read_env()
-BOOKS_PAGE_PATH = environs.str("BOOKS_PAGES", "books_page.json")
+BOOK_PAGE_PATH = "books_page.json"
 
 
 def on_reload():
@@ -25,7 +23,7 @@ def on_reload():
         loader=FileSystemLoader("."),
         autoescape=select_autoescape(["html"])
     )
-    with open(BOOKS_PAGE_PATH, "r", encoding="utf-8") as my_file:
+    with open(BOOK_PAGE_PATH, "r", encoding="utf-8") as my_file:
         books = json.load(my_file)
     books_on_page = 10
     count_pages = math.ceil(len(books) / books_on_page)
